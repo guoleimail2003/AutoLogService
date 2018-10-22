@@ -27,8 +27,6 @@ import android.os.Bundle;
 import android.util.JsonReader;
 import android.util.Log;
 
-import libcore.io.IoBridge;
-
 public class WebClient {
     private static final String TAG = WebClient.class.getSimpleName();
 
@@ -80,10 +78,9 @@ public class WebClient {
 
         //
         byte[] mydata = stringBuffer.toString().getBytes();
-		
-        //
+
         connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
-        connection.setRequestProperty("Content-Lenth", String.valueOf(mydata.length));
+        connection.setRequestProperty("Content-Length", String.valueOf(mydata.length));
 
         OutputStream outputStream = connection.getOutputStream();
 
@@ -130,7 +127,7 @@ public class WebClient {
         connection.setRequestProperty("accept", "*/*");
         connection.setRequestProperty("connection", "Keep-Alive");
         connection.setConnectTimeout(3000);
-        if (connection.getResponseCode() == 200) {
+        if (connection.getResponseCode() == HttpURLConnection.HTTP_OK) {
             result = getResponseString(connection);
         }
 
@@ -200,6 +197,7 @@ public class WebClient {
 
         connection.setRequestProperty("Connection", "Keep-Alive");
         connection.setRequestProperty("Content-Type", "multipart/form-data; boundary=" + BOUNDARY);
+        connection.setRequestProperty("Accept-Encoding", "application/json");
 
         OutputStream out = null;
         try {
@@ -226,12 +224,11 @@ public class WebClient {
             e.printStackTrace();
         }
 
-        String imei = params.get("imei");
         StringBuilder contentBody = new StringBuilder();
-        contentBody.append("Content-Disposition:form-data; imei=\""+ imei + "\"; filename=\"")
+        contentBody.append("Content-Disposition:form-data; name=\"file\" " + "; filename=\"")
                 .append(filename)
                 .append("\"\r\n")
-                .append("Content-Type:application/octet-stream")
+                .append("Content-Type:text/plain")
                 .append("\r\n\r\n");
         try {
             out.write(contentBody.toString().getBytes("utf-8"));
@@ -310,9 +307,9 @@ public class WebClient {
                                              int blockSize,
                                              Map<String, String> params,
                                              String storeAs,
-                                             boolean final_) throws BadFileException, BadResponseException, NotReachException {
+                                             boolean eof) throws BadFileException, BadResponseException, NotReachException {
         //postparams.put("subpath", storeAs);
-        params.put("final", final_ ? "1" : "0");
+        //params.put("EOF_FILE", eof ? "1" : "0");
 
         return uploadFileChunk(url, path, startOffset, blockSize, params);
     }

@@ -1,5 +1,3 @@
-
-
 package com.common.logservice;
 
 import android.content.BroadcastReceiver;

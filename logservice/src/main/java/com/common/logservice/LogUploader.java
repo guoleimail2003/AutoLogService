@@ -333,7 +333,6 @@ public class LogUploader implements DbFiledName {
         public int uploadPartialEx(Context context, String desc) {
             Log.v(TAG, "uploadPartialEx");
 			Map<String, String> postparams = new HashMap<>();
-			//postparams.put("desc", desc);
 			postparams.put("imei", mImei);
             return uploadPartial(context, null, postparams); //req:upload dump log
         }
