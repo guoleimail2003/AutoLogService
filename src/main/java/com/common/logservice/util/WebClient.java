@@ -506,7 +506,7 @@ public class WebClient {
             conn.setReadTimeout(3000);
             int httpResponseCode = conn.getResponseCode();
             Log.v(TAG, "checkUpdate httpResponseCode = [" + httpResponseCode + "]");
-            if (200 == httpResponseCode) {
+            if (HttpURLConnection.HTTP_OK == httpResponseCode) {
                 isrd = new InputStreamReader(conn.getInputStream());
             } else {
                 Log.e(TAG, "checkUpdate responsecode invalid");
@@ -577,7 +577,7 @@ public class WebClient {
             conn.setReadTimeout(3000);
             int httpResponseCode = conn.getResponseCode();
             Log.v(TAG, "checkCategory httpResponseCode = [" + httpResponseCode + "]");
-            if (200 == httpResponseCode) {
+            if (HttpURLConnection.HTTP_OK == httpResponseCode) {
                 String temp = null;
                 isrd = new InputStreamReader(conn.getInputStream());
                 brd = new BufferedReader(isrd);
@@ -621,16 +621,13 @@ public class WebClient {
                 if (val.equals("name")) {
                     pkg.putString("name", rd.nextString());
                 } else if (val.equals("version")) {
-                    pkg.putInt("version", rd.nextInt());
-                } else if (val.equals("url")) {
-                    String server = Util.getServerUrl(context);
-                    String path = rd.nextString();
-                    if (path.indexOf("/") != 0) {
-                        server += "/";
-                    }
-                    String url = server + path;
-                    pkg.putString("url", url);
-                } else {
+                    pkg.putString("version", rd.nextString());
+                } else if (val.equals("description")) {
+                    pkg.putString("description", rd.nextString());
+                } else if (val.equals("firmware")) {
+                    pkg.putString("firmware", rd.nextString());
+                } else
+                    {
                     rd.skipValue();
                 }
             }
@@ -640,11 +637,15 @@ public class WebClient {
             Log.e(TAG, "getPackage IOException = " + e.getMessage());
         }
 
-        String name = (String)pkg.getString("name", null);
-        int version = (int)pkg.getInt("version", 0);
-        String url = (String)pkg.getString("url", null);
-        Log.v(TAG, "getPackage name[" + name + "] version[" + version + "] url[" + url + "]");
-        if (name == null || version <= 0 || url == null) {
+        String name = pkg.getString("name", "");
+        String version = pkg.getString("version", "");
+        String description = pkg.getString("descritpion","");
+        String firmware = pkg.getString("firmware", "");
+        Log.v(TAG, "getPackage name[" + name
+                + "] version[" + version
+                + "] descrition[" + description + "]"
+                + "] firmware[" + firmware + "]");
+        if (name.isEmpty() || version.isEmpty() || description.isEmpty() || firmware.isEmpty()) {
             Log.v(TAG, "getPackage invalid pkg");
             pkg = null;
         }

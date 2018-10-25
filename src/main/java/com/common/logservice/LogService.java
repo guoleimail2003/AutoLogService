@@ -3,29 +3,32 @@ package com.common.logservice;
 
 import java.util.ArrayList;
 
-import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.location.Location;
-import android.location.LocationListener;
-import android.location.LocationManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.os.IBinder;
-import android.os.RemoteException;
-import com.common.logservice.mqtt.MqttSubcriber;
 import android.util.Log;
 
-public class LogService extends Service /*implements MqttSubcriber.ICallback*/ {
+public class LogService extends Service {
 
     private static final String TAG = "LogService";
 
+    private static final String ACTION_REPORT_USER_EXCEPTION = "android.intent.action.ACTION_REPORT_EXCEPTION";
+    private static final String ACTION_UPLOAD_LOG_FILE = "android.intent.action.ACTION_UPLOAD_LOG_FILE";
+    private static final String ACTION_VALIDATE = "android.intent.action.ACTION_VALIDATE";
+    private static final String ACTION_DOWNLOAD = "android.intent.action.ACTION_DOWNLOAD";
+    private static final String ACTION_CHECK_UPDATE = "android.intent.action.ACTION_CHECK_UPDATE";
+    private static final String ACTION_CHECK_CATEGORY = "android.intent.action.ACTION_CHECK_CATEGORY";
+
+    private static final String ACTION_REPORT_USER_EXCEPTION_RESULT = "android.intent.action.ACTION_REPORT_USER_EXCEPTION_RESULT";
+    private static final String ACTION_UPLOAD_LOG_FILE_RESULT = "android.intent.action.ACTION_UPLOAD_LOG_FILE_RESULT";
     private static final String ACTION_VALIDATE_RESULT = "android.intent.action.ACTION_VALIDATE_RESULT";
     private static final String ACTION_DOWNLOAD_RESULT = "android.intent.action.ACTION_DOWNLOAD_RESULT";
     private static final String ACTION_CHECK_UPDATE_RESULT = "android.intent.action.ACTION_CHECK_UPDATE_RESULT";
@@ -57,9 +60,39 @@ public class LogService extends Service /*implements MqttSubcriber.ICallback*/ {
                     Log.v(TAG, "mBroadcastReceiver.onReceive Wifi connected");
                     mUploader.notifyTask();
                 }
-            } else if (action.equals(ACTION_PING_TIMEOUT)) {
+            } else if (ACTION_PING_TIMEOUT.equals(action)) {
                 Log.v(TAG, "mBroadcastReceiver.onReceive PING timeout");
                 mUploader.notifyPingTask();
+            } else if (ACTION_REPORT_USER_EXCEPTION.equals(action)) {
+                Log.v(TAG, "mBroadcastReceiver.onReceive action = " + action);
+                String desc = intent.getStringExtra("title");
+                Bundle bundle = new Bundle();
+
+                mExceptionHandler.reportUserException(desc, bundle);
+            } else if (ACTION_UPLOAD_LOG_FILE.equals(action)) {
+                Log.v(TAG, "mBroadcastReceiver.onReceive action = " + action);
+                String desc = intent.getStringExtra("EE_TITLE");
+                String file_path = intent.getStringExtra("EE_FILE_PATH");
+                Bundle bundle = new Bundle();
+                mExceptionHandler.uploadLogFile(desc, file_path, bundle);
+            } else if (ACTION_CHECK_UPDATE.equals(action)) {
+                Log.v(TAG, "mBroadcastReceiver.onReceive action = " + action);
+                Bundle bundle = new Bundle();
+                mUploader.checkUpdate(bundle);
+            } else if (ACTION_VALIDATE.equals(action)) {
+                Log.v(TAG, "mBroadcastReceiver.onReceive action = " + action);
+                Bundle bundle = new Bundle();
+                //  (bundle);
+            } else if (ACTION_DOWNLOAD.equals(action)) {
+                Log.v(TAG, "mBroadcastReceiver.onReceive action = " + action);
+                Bundle bundle = new Bundle();
+                String url = intent.getStringExtra("URL");
+                String path = intent.getStringExtra("file_path");
+                mUploader.download(url, path, bundle);
+            } else if (ACTION_CHECK_CATEGORY.equals(action)) {
+                Log.v(TAG, "mBroadcastReceiver.onReceive action = " + action);
+            } else {
+                Log.v(TAG, "mBroadcastReceiver.onReceive action = " + action + " can not handle it!");
             }
         }
     };
@@ -168,6 +201,12 @@ public class LogService extends Service /*implements MqttSubcriber.ICallback*/ {
         filter.addAction(WifiManager.NETWORK_STATE_CHANGED_ACTION);
         filter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
         filter.addAction(ACTION_PING_TIMEOUT);
+        filter.addAction(ACTION_REPORT_USER_EXCEPTION);
+        filter.addAction(ACTION_UPLOAD_LOG_FILE);
+        filter.addAction(ACTION_DOWNLOAD);
+        filter.addAction(ACTION_VALIDATE);
+        filter.addAction(ACTION_CHECK_CATEGORY);
+        filter.addAction(ACTION_CHECK_UPDATE);
         registerReceiver(mBroadcastReceiver, filter);
 
         Intent intent = new Intent(ACTION_PING_TIMEOUT);

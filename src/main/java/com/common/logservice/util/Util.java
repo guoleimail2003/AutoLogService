@@ -41,7 +41,7 @@ public class Util {
         public String ip = "192.168.31.232";
         public String internal_server = "http://192.168.31.232:3000";
         public String external_server = "http://192.168.31.232:3000";
-        public String query_path = "/api/QueryPackages";
+        public String query_path = "/ota/versions";
         public String download_path = "/api/DownloadPackage";
         public String validate_path = "/account/token/commit";
         public String category_path = "/api/exceptions/cat";
@@ -142,10 +142,10 @@ public class Util {
     
     public static boolean isIntranet(Context context) {
 
-        if (!isWifiConnect(context)) {
-            Log.e(TAG, "isIntranet no wifi connect");
-            return false;
-        }
+        //if (!isWifiConnect(context)) {
+        //    Log.e(TAG, "isIntranet no wifi connect");
+        //    return false;
+        //}
 
         try {
             Info info = Info.getSingleton();
