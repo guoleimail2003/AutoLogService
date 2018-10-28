@@ -30,6 +30,10 @@ import android.util.Log;
 public class WebClient {
     private static final String TAG = WebClient.class.getSimpleName();
 
+    public static final int FINISHED = 1;
+    public static final int UNRECOVERABLE_ERROR = 2;
+    public static final int RECOVERABLE_ERROR = 3;
+
     public static class BadResponseException extends Exception {
          BadResponseException(String msg) {
             super(msg);
@@ -181,12 +185,12 @@ public class WebClient {
     private static JSONObject uploadFileChunk(
             URL url, String path, int offset, int blockSize, Map<String, String> params)
             throws BadFileException, NotReachException, BadResponseException {
-        Log.v(TAG, "uploadFileChunk url = [" + url + "] path = [" + path + "] offset = [" + offset + "] blockSize = [" + blockSize + "]");
+        Log.v(TAG, "uploadFileChunk url = [" + url + "] path = [" + path + "] offset = [" + offset + "] blockSize = [" + blockSize/1024 + "K]");
         File file = new File(path);
         String filename = file.getName();
         DataInputStream dis = prepareFileStream(path, offset);
 
-        final int READ_BUF_SIZE = 8192;
+        final int READ_BUF_SIZE = 1024*1024;
         HttpURLConnection connection;
 
         try {
@@ -269,6 +273,7 @@ public class WebClient {
 
         // read response
         String strLine;
+        int response_code = 0;
         StringBuilder strResponse = new StringBuilder();
         try {
             InputStream response = connection.getInputStream();
@@ -277,6 +282,8 @@ public class WebClient {
                 strResponse.append(strLine);
                 strResponse.append("\n");
             }
+            response_code = connection.getResponseCode();
+            strResponse.append("HttpResponseCode = [" + response_code + "]");
             reader.close();
             response.close();
         } catch (IOException e) {
@@ -284,20 +291,19 @@ public class WebClient {
         }
         connection.disconnect();
 
+
         Log.v(TAG, "uploadFileChunk strResponse = [" + strResponse.toString() + "]");
 
-        JSONObject jsonobj;
-        try {
-            jsonobj = new JSONObject(strResponse.toString());
-            if (!jsonobj.has("result") || !jsonobj.getBoolean("result")) {
-                throw new BadResponseException(jsonobj.getString("error"));
+        JSONObject jsonobj = null;
+        if (HttpURLConnection.HTTP_OK == response_code) {
+            try {
+                jsonobj = new JSONObject(strResponse.toString());
+                jsonobj.put("eof", eof);
+                jsonobj.put("bytes", totalCount);
+            } catch (JSONException e) {
+                throw new BadResponseException(strResponse.toString());
             }
-            jsonobj.put("eof", eof);
-            jsonobj.put("bytes", totalCount);
-        } catch (JSONException e) {
-            throw new BadResponseException(strResponse.toString());
         }
-
         return jsonobj;
     }
 
@@ -313,15 +319,6 @@ public class WebClient {
 
         return uploadFileChunk(url, path, startOffset, blockSize, params);
     }
-
-
-    //public static final String SERVERS[] = {
-    //        "http://172.21.3.240",
-    //        "http://acs.leadcoretech.com"};
-
-    public static final int FINISHED = 1;
-    public static final int UNRECOVERABLE_ERROR = 2;
-    public static final int RECOVERABLE_ERROR = 3;
 
     public static class UploadFile {
 
@@ -449,9 +446,11 @@ public class WebClient {
             conn.setReadTimeout(3000);
             int httpResponseCode = conn.getResponseCode();
             Log.v(TAG, "downloadFile httpResponseCode = [" + httpResponseCode + "]");
-            if (200 == httpResponseCode) {
+            if (HttpURLConnection.HTTP_OK == httpResponseCode) {
                 is = conn.getInputStream();  
-                bis = new BufferedInputStream(is);   
+                bis = new BufferedInputStream(is);
+                File f_update = new File(path);
+                f_update.createNewFile();
                 fos = new FileOutputStream(new File(path));  
                 byte [] buffer = new byte[1024];  
                 int len = 0;  
@@ -474,7 +473,9 @@ public class WebClient {
             Log.e(TAG, "downloadFile NullPointerException = " + e.getMessage());
             ret = "FAILED";
         } finally {
+
             try {
+                fos.flush();
                 if (fos != null) {
                     fos.close();
                 }
@@ -522,23 +523,16 @@ public class WebClient {
             JsonReader reader = null;
             try {
                 reader = new JsonReader(isrd);
+                reader.beginArray();
                 reader.beginObject();
                 while (reader.hasNext()) {
-                    String val = reader.nextName();
-                    if (val.equals("packages")) {
-                        reader.beginArray();
-                        while (reader.hasNext()) {
-                            Bundle pkg = getPackage(context, reader);
-                            if (pkg != null) {
-                                pkgs.add(pkg);
-                            }
+                    Bundle pkg = getPackage(context, reader);
+                        if (pkg != null) {
+                            pkgs.add(pkg);
                         }
-                        reader.endArray();
-                    } else {
-                        reader.skipValue();
-                    }
                 }
                 reader.endObject();
+                reader.endArray();
             } catch (NullPointerException e) {
                 pkgs = null;
                 e.printStackTrace();
@@ -615,7 +609,7 @@ public class WebClient {
         Log.v(TAG, "getPackage");
         Bundle pkg = new Bundle();
         try {
-            rd.beginObject();
+            //rd.beginObject();
             while (rd.hasNext()) {
                 String val = rd.nextName();
                 if (val.equals("name")) {
@@ -631,7 +625,7 @@ public class WebClient {
                     rd.skipValue();
                 }
             }
-            rd.endObject();
+            //rd.endObject();
         } catch (IOException e) {
             e.printStackTrace();
             Log.e(TAG, "getPackage IOException = " + e.getMessage());
@@ -639,11 +633,11 @@ public class WebClient {
 
         String name = pkg.getString("name", "");
         String version = pkg.getString("version", "");
-        String description = pkg.getString("descritpion","");
+        String description = pkg.getString("description","");
         String firmware = pkg.getString("firmware", "");
         Log.v(TAG, "getPackage name[" + name
                 + "] version[" + version
-                + "] descrition[" + description + "]"
+                + "] descrition[" + description
                 + "] firmware[" + firmware + "]");
         if (name.isEmpty() || version.isEmpty() || description.isEmpty() || firmware.isEmpty()) {
             Log.v(TAG, "getPackage invalid pkg");

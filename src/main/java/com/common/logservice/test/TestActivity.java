@@ -8,6 +8,7 @@ import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.RemoteException;
+import android.os.StrictMode;
 import android.support.annotation.Nullable;
 import android.view.View;
 import android.widget.Button;
@@ -28,6 +29,7 @@ public class TestActivity extends Activity {
 
     private Button mReportUserException;
     private Button mUploadFileLog;
+    private Button mCheckupdate;
     private ILogService.Stub mLogService;
     private static int exception_index = 0;
     private static int upload_file_index = 0;
@@ -36,10 +38,18 @@ public class TestActivity extends Activity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        //test code ,can not do network access in main thread.
+        if (android.os.Build.VERSION.SDK_INT > 9) {
+            StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
+            StrictMode.setThreadPolicy(policy);
+        }
+
         setContentView(R.layout.test_main);
 
         mReportUserException = (Button)findViewById(R.id.reportUserException);
         mUploadFileLog = (Button)findViewById(R.id.uploadLogFile);
+        mCheckupdate = (Button)findViewById(R.id.checkupdate);
+
 
         mReportUserException.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -86,7 +96,20 @@ public class TestActivity extends Activity {
                 String file_path = "/sdcard/1.txt";
                 Bundle b = new Bundle();
                 try {
-                    mLogService.uploadLogFile(description, file_path, b);
+                    mLogService.uploadLogFile(description, file_path, 1, b);
+                } catch (RemoteException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+
+        mCheckupdate.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Bundle bundle = new Bundle();
+                String abcd = "abc";
+                try {
+                    mLogService.checkUpdate(abcd, bundle);
                 } catch (RemoteException e) {
                     e.printStackTrace();
                 }

@@ -15,9 +15,6 @@ import com.common.logservice.util.Util;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
-
 public class LogDataHelper implements DbFiledName {
 
     private static final String TAG = "LogDataHelper";
@@ -46,6 +43,7 @@ public class LogDataHelper implements DbFiledName {
                     + JSON_OBJECT + " TEXT,"
                     + TITLE + " TEXT,"
                     + FILE_PATH + " TEXT,"
+                    + FILE_COUNT + " INTEGER DEFAULT 1,"
                     + RX_TIME + " datetime DEFAULT current_timestamp, "
                     + TX_TIME + " datetime,"
                     + ERR_COUNT + " INTEGER DEFAULT 0,"
@@ -101,7 +99,7 @@ public class LogDataHelper implements DbFiledName {
 
     public long addTask(TypeValues type,
                         PriorityValues priority, JSONObject jobj,
-                        String title, String file_path) {
+                        String title, String file_path, int file_count) {
         String imei1 = Util.queryIMEI(mContext);
         String imei2 = Util.queryIMEI(mContext);
         Log.v(TAG, "addTask imei_1 = " + imei1
@@ -117,6 +115,7 @@ public class LogDataHelper implements DbFiledName {
         cv.put(JSON_OBJECT, jobj.toString());
         cv.put(TITLE, title);
         cv.put(FILE_PATH, file_path);
+        cv.put(FILE_COUNT, file_count);
 
         return helper.insert(cv);
     }
@@ -176,7 +175,8 @@ public class LogDataHelper implements DbFiledName {
                     + " priority = [" + r.getPriority() + "]"
                     + " type = [" + r.getType() + "]"
                     + " title = [" + r.getTitle() + "]"
-                    + " file_path = [" + r.getFile_path() + "]");
+                    + " file_path = [" + r.getFile_path() + "]"
+                    + " file_count = [" + r.getFile_count() + "]");
             try {
                 r.setObject(new JSONObject(str));
             } catch (JSONException e) {

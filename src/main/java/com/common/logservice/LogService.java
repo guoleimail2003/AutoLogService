@@ -1,6 +1,7 @@
 
 package com.common.logservice;
 
+import java.io.File;
 import java.util.ArrayList;
 
 import android.app.PendingIntent;
@@ -12,7 +13,9 @@ import android.content.IntentFilter;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.wifi.WifiManager;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.IBinder;
 import android.util.Log;
 
@@ -74,7 +77,7 @@ public class LogService extends Service {
                 String desc = intent.getStringExtra("EE_TITLE");
                 String file_path = intent.getStringExtra("EE_FILE_PATH");
                 Bundle bundle = new Bundle();
-                mExceptionHandler.uploadLogFile(desc, file_path, bundle);
+                mExceptionHandler.uploadLogFile(desc, file_path, 1, bundle);
             } else if (ACTION_CHECK_UPDATE.equals(action)) {
                 Log.v(TAG, "mBroadcastReceiver.onReceive action = " + action);
                 Bundle bundle = new Bundle();
@@ -107,10 +110,10 @@ public class LogService extends Service {
         }
 
         @Override
-        public void uploadLogFile(String description, String file_path, Bundle info) {
+        public void uploadLogFile(String description, String file_path, int file_count, Bundle info) {
             Log.v(TAG, "uploadLogFile path = [" + file_path + "]");
             if (mExceptionHandler != null) {
-                mExceptionHandler.uploadLogFile(description, file_path, info);
+                mExceptionHandler.uploadLogFile(description, file_path, file_count, info);
             }
         }
 
@@ -149,6 +152,20 @@ public class LogService extends Service {
             if (mUploader != null) {
                 pkgs = mUploader.checkUpdate(info);
             }
+
+            //get the download url
+            Bundle first = pkgs.get(0);
+            String url = first.getString("firmware").trim();
+
+            File[] files = null;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+                files = getExternalFilesDirs(Environment.MEDIA_MOUNTED);
+            }
+            Log.d(TAG, "file_path = " + Environment.getExternalStorageDirectory());
+            String path = files[0].getAbsolutePath();
+            path = path + "/ " + "update.zip";
+            download("abcdefg", url, path ,new Bundle());
+
 
             Intent intent = new Intent(ACTION_CHECK_UPDATE_RESULT);
             intent.putParcelableArrayListExtra("pkgs", pkgs);

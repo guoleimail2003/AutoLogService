@@ -7,7 +7,7 @@ interface ILogService
 {
     void uploadUserException(String description, in Bundle info);
 
-    void uploadLogFile(String description, String path, in Bundle info);
+    void uploadLogFile(String description, String path, int file_count, in Bundle info);
 	
     void validate(String description, String code, in Bundle info);
 	

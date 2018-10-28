@@ -9,6 +9,7 @@ public interface DbFiledName {
     String JSON_OBJECT = "json_obj";
     String TITLE = "title";
     String FILE_PATH = "file_path";
+    String FILE_COUNT = "file_count";
     String RX_TIME = "rx_time";
     String TX_TIME = "tx_time";
     String ERR_COUNT = "err_count";

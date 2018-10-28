@@ -110,11 +110,12 @@ public class LogException implements DbFiledName {
                 bundle, description);
     }
 
-    public void uploadLogFile(String description, String path, Bundle info) {
+    public void uploadLogFile(String description, String path, int file_count, Bundle info) {
         Log.v(TAG, "uploadLogFile path = " + path);
         Bundle bundle = new Bundle();
         bundle.putString(TITLE, description);
         bundle.putString(FILE_PATH, path);
+        bundle.putInt(FILE_COUNT, file_count);
         if (info != null) {
             bundle.putBundle("info", info);
         }

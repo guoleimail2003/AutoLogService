@@ -14,6 +14,7 @@ public class E_Record {
     private JSONObject object;
     private String title;
     private String file_path;
+    private int file_count;
     private String rx_time;
     private String tx_time;
     private String description;
@@ -84,6 +85,14 @@ public class E_Record {
         this.file_path = file_path;
     }
 
+    public int getFile_count() {
+        return file_count;
+    }
+
+    public void setFile_count(int file_count) {
+        this.file_count = file_count;
+    }
+
     public String getRx_time() {
         return rx_time;
     }
@@ -98,6 +107,14 @@ public class E_Record {
 
     public void setTx_time(String tx_time) {
         this.tx_time = tx_time;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
     }
 
     public int getErrcount() {

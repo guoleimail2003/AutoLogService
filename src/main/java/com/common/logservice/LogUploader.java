@@ -152,8 +152,24 @@ public class LogUploader implements DbFiledName {
     }
 
     public boolean postTask(TypeValues type, PriorityValues priority, JSONObject obj, String title) {
-        Log.v(TAG, "postTask type = " + type + "  priory = " + priority + " title =" + title);
-        long id = dataHelper.addTask(type, priority, obj, title, null);
+        String file_path = null;
+        int file_count = 0;
+        try {
+            if (obj.has(FILE_PATH)) {
+                file_path = obj.getString(FILE_PATH);
+            }
+            if (obj.has(FILE_COUNT)) {
+                file_count = obj.getInt(FILE_COUNT);
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        Log.v(TAG, "postTask type = " + type
+                + "  priory = " + priority
+                + " file_path = " + file_path
+                + " file_count = " + file_count
+                + " title =" + title);
+        long id = dataHelper.addTask(type, priority, obj, title, file_path, file_count);
         Log.v(TAG, "postTask id = " + id);
         return id > 0;
     }
@@ -223,9 +239,8 @@ public class LogUploader implements DbFiledName {
                 break;
             }
 
-    		if (r.getType() == TypeValues.T_UPLOAD_LOGFILE && !Util.isWifiConnect(mContext)) {
-                Log.e(TAG, "taskRoutine no WIFI");
-                break;
+    		if (r.getType() == TypeValues.T_UPLOAD_LOGFILE) {
+                Log.d(TAG, "upload the logfile with in no WIFI");
     		}
 
             TaskHandler handle = handlers.get(r.getType().getValue());
@@ -283,10 +298,33 @@ public class LogUploader implements DbFiledName {
         try {
             String key = "";
             int pos = 0;
-            String desc = r.getObject().getString(TITLE); //req:upload dump log
-            String logpath = r.getObject().getString(FILE_PATH);
+            String desc = "", logpath = "";
+            int file_count = 0;
+            if (r.getObject().has(TITLE)) {
+                desc = r.getObject().getString(TITLE); //req:upload dump log
+            }
+            if (r.getObject().has(FILE_PATH)) {
+                logpath = r.getObject().getString(FILE_PATH);
+            }
+            if (r.getObject().has(FILE_COUNT)) {
+                file_count = r.getObject().getInt(FILE_COUNT);
+            }
 
-            UploadFileTask post = new UploadFileTask(logpath, pos);
+            //if file_count > 1 , multi file uploaded
+            UploadFileTask post;
+            if (file_count > 1) {
+                //multi file
+                String[] f_uploads = null;
+                //String f_extend_name = logpath.substring(logpath.lastIndexOf('.') + 1);
+                for (int i=0; i<file_count; i++) {
+                    f_uploads[i] = logpath + "_" + i;
+                }
+                post = new UploadFileTask(f_uploads);
+            } else {
+                //signle file
+                post = new UploadFileTask(logpath, pos);
+            }
+
             ret = post.uploadPartialEx(context, desc); //req:upload dump log
             Log.v(TAG, "doFileUpload ret = [" + ret + "]");
             if (ret == WebClient.FINISHED) {
@@ -473,7 +511,7 @@ public class LogUploader implements DbFiledName {
     public ArrayList<Bundle> checkUpdate(Bundle info) {
         Log.v(TAG, "checkUpdate");
         String url = Util.getCheckUpdateUrl(mContext);
-        Log.v(TAG, "checkUpdate url = [" + url + "]");
+        Log.v(TAG, "checkUpdate url = [" + url.toString() + "]");
         ArrayList<Bundle> pkgs = WebClient.checkUpdate(mContext, url);
         return pkgs;
     }

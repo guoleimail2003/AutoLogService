@@ -14,4 +14,10 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="uploadLogFile" />
+
+    <Button
+        android:id="@+id/checkupdate"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="checkupdate" />
 </LinearLayout>
