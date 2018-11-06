@@ -1,7 +1,5 @@
 package com.common.logservice;
 
-import java.lang.reflect.Type;
-import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.io.IOException;
@@ -35,8 +33,6 @@ public class LogUploader implements DbFiledName {
 
     private Context mContext;
     private LogDataHelper dataHelper = null;
-    private double mLatitude = 0.0F;
-    private double mLongitude = 0.0F;
     private static String mImei = "";
     private static String mSn = "";
     private static String mHwVersion = "";
@@ -115,12 +111,6 @@ public class LogUploader implements DbFiledName {
 		return mSwVersion;
 	}
 	
-    public void updateLocation(double latitude, double longitude) {
-        mLatitude = latitude;
-        mLongitude = longitude;
-        Log.v(TAG, "updateLocation mLatitude = " + mLatitude + " mLongitude = " + mLongitude);
-    }
-
     private JSONObject convertJsonObject(Bundle bundle) {
         Log.v(TAG, "convertJsonObject");
         JSONObject jobj = new JSONObject();
@@ -230,7 +220,7 @@ public class LogUploader implements DbFiledName {
                 break;
             } else {
                 Log.v(TAG, "taskRoutine find record id = [" + r.getId() + "]"
-                        + " title =[" + r.getTitle() + "]");
+                        + " title =[" + r.getDescription() + "]");
             }
 
 			executeCount++;
@@ -252,6 +242,9 @@ public class LogUploader implements DbFiledName {
 
             if (!handle.handle(this, r)) {
                 Log.e(TAG, "taskRoutine handle record id = [" + r.getId() + "] failed");
+                r.setErr("Network problem issue");
+                r.setErrcount(r.getErrcount() + 1);
+                updateTask(r);
                 break;
             } else {
                 Log.v(TAG, "taskRoutine handle record id = [" + r.getId() + "] successfully");
@@ -274,7 +267,7 @@ public class LogUploader implements DbFiledName {
         Log.v(TAG, "doWebPost branch = " + branch);
         Map<String, String> params = new HashMap<>();
         params.put("imei", r.getImei_1());
-        params.put("exception", r.getTitle());  // exception description
+        params.put("exception", r.getDescription());  // exception description
         //params.put("object", r.getObject().toString());
         try {
             //String response = WebClient.post(context, POST_URL, params);
@@ -300,8 +293,8 @@ public class LogUploader implements DbFiledName {
             int pos = 0;
             String desc = "", logpath = "";
             int file_count = 0;
-            if (r.getObject().has(TITLE)) {
-                desc = r.getObject().getString(TITLE); //req:upload dump log
+            if (r.getObject().has(DESCRIPTION)) {
+                desc = r.getObject().getString(DESCRIPTION); //req:upload dump log
             }
             if (r.getObject().has(FILE_PATH)) {
                 logpath = r.getObject().getString(FILE_PATH);
@@ -311,12 +304,14 @@ public class LogUploader implements DbFiledName {
             }
 
             //if file_count > 1 , multi file uploaded
+            Log.v(TAG, "doFileUpload check file_count = " + file_count);
             UploadFileTask post;
             if (file_count > 1) {
                 //multi file
-                String[] f_uploads = null;
+                String[] f_uploads = new String[file_count];
                 //String f_extend_name = logpath.substring(logpath.lastIndexOf('.') + 1);
-                for (int i=0; i<file_count; i++) {
+                f_uploads[0] = logpath;
+                for (int i=1; i<file_count; i++) {
                     f_uploads[i] = logpath + "_" + i;
                 }
                 post = new UploadFileTask(f_uploads);
@@ -380,12 +375,12 @@ public class LogUploader implements DbFiledName {
         Log.v(TAG, "constructObject");
         try {
             //obj.put("key", genId());
-            obj.put("imei", mImei);
+            //obj.put("imei", mImei);
             obj.put("mSn", mSn);
             obj.put("mHwVersion", mHwVersion);
             obj.put("mSwVersion", mSwVersion);
             obj.put("mBbVersion", mBbVersion);
-            obj.put("time", Util.formatTime());
+            //obj.put("time", Util.formatTime());
             Log.v(TAG, "constructObject obj = [" + obj.toString() + "]");
         } catch (JSONException e) {
             e.printStackTrace();
@@ -421,7 +416,7 @@ public class LogUploader implements DbFiledName {
         String swv = Build.VERSION.RELEASE;
         Log.v(TAG, "checkIrrevocable swv = [" + swv + "]");
         mSwVersion = swv;
-        
+
         String bbv = Build.getRadioVersion();
         Log.v(TAG, "checkIrrevocable bbv = [" + bbv + "]");
         mBbVersion = bbv;
@@ -450,7 +445,7 @@ public class LogUploader implements DbFiledName {
 
         E_Record r = new E_Record();
         r.setId(System.currentTimeMillis());
-        r.setPriority(PriorityValues.P_FATAL);
+        r.setPriority(PriorityValues.P_INFO);
         r.setType(TypeValues.T_PING);
 
         if (!compileObj(r.getObject())) {

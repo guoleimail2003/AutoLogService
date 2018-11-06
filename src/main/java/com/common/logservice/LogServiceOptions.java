@@ -1,6 +1,7 @@
 package com.common.logservice;
 
 import android.content.Context;
+import android.os.Environment;
 import android.os.SystemProperties;
 import android.util.Log;
 
@@ -16,102 +17,96 @@ public class LogServiceOptions {
 
     private static final String TAG = "LogServiceOptions";
 
-    private String mProperty = null;
+    private static JSONObject mJsonObject;
+    private static ServerConfig mServerConfig;
+    private static String DEFAULT = "{\"server_ip_addr\":\"192.168.31.232\",\"server_access_port\":3000}";
+    private static String DEFAULT_FILE_PATH = Environment.getExternalStorageDirectory() + "/autoservice.txt";
 
-    private static final int SECTION_COUNT = 30;
+	private String[] OPTION_FIELD_NAME = {
+		"server_ip_addr",
+		"server_access_port",
 
-    private static final String PROPERTY_LOG_SERVICE = "persist.sys.log_service";
-    private static final String PROPERTY_LOG_SERVICE_DEFAULT = "I0,0,I1,0,I2,0,I3,0,I4,0,I5,0,I6,0,I7,0,I8,0,I9,0,I10,1,I11,1,I12,1,I13,1,I14,1";
+			//Add options here first step
 
-	protected Map<String, Boolean> mapOption;
-	protected Map<String, Integer> mapPropIndex;
+	};
 
-    private long optionUpdateStamp = 0;
+	private static enum  OPTION_FIELD_INDEX {
+		SERVER_IP_ADDR(0),
+		SERVER_ACCESS_PORT(1)
+		;
 
-    public LogServiceOptions() {
-		mapOption = new HashMap<>();
-		mapPropIndex = new HashMap<>();
-		
-		mapOption.put("DeleteAfterUpload", true);
-		mapPropIndex.put("DeleteAfterUpload", 1);
-		
-		mapOption.put("ReportModem", true);
-		mapPropIndex.put("ReportModem", 21);
-		
-		mapOption.put("ReportELogHl", true);
-		mapPropIndex.put("ReportELogHl", 23);
-		
-		mapOption.put("ReportELogPl", true);
-		mapPropIndex.put("ReportELogPl", 25);
-		
-		mapOption.put("ReportApAnr", true);
-		mapPropIndex.put("ReportApAnr", 27);
-		
-		mapOption.put("ReportApCrash", true);
-		mapPropIndex.put("ReportApCrash", 29);
-		
-		mapOption.put("Location", true);
-		mapPropIndex.put("Location", 3);
-    }
+		private int value;
+		OPTION_FIELD_INDEX(int v) {
+			this.value = v;
+		}
+	};
 
-	public boolean DeleteAfterUpload() {
-		return mapOption.get("DeleteAfterUpload");
+	public class ServerConfig {
+		private String serverIPAddr;
+		private Integer serverAccessPort;
+
+		//Add option here third step.
+
+		ServerConfig(String cfg) {
+			mJsonObject = parseJson(cfg);
+			for (String str : OPTION_FIELD_NAME) {
+				try {
+					if (mJsonObject.has(str)) {
+						if (str.equals(OPTION_FIELD_NAME[0])) {
+							setServerIPAddr(mJsonObject.getString(str));
+						}
+					}
+				} catch (JSONException e) {
+					e.printStackTrace();
+				}
+
+			}
+
+		}
+
+		public ServerConfig getServerConfig(String file_path) {
+			if (mServerConfig == null) {
+				mServerConfig = new ServerConfig(file_path);
+			}
+			return mServerConfig;
+		}
+
+		public String getServerIPAddr() {
+			return serverIPAddr;
+		}
+
+		public void setServerIPAddr(String serverIPAddr) {
+			this.serverIPAddr = serverIPAddr;
+		}
+
+		public Integer getServerAccessPort() {
+			return serverAccessPort;
+		}
+
+		public void setServerAccessPort(Integer serverAccessPort) {
+			this.serverAccessPort = serverAccessPort;
+		}
 	}
 
-	public void parseJson(String cfg) {
-		
+    public LogServiceOptions(String cfg_path) {
+    	super();
+    	//mServerConfig = getServerConfig(cfg_path);
+    }
+
+
+	public JSONObject parseJson(String cfg) {
+		JSONObject jsonObject = null;
 		try {
-			JSONObject jobj = new JSONObject(cfg);
-			
-			
-			for (Entry<String, Boolean> entry: mapOption.entrySet()) {
-				String key = entry.getKey();
-				if (jobj.has(key)) {
-					entry.setValue(jobj.getString(key).equals("1"));
-					Log.v(TAG, "parseJson " + key + " = " + jobj.getString(key));
+			jsonObject = new JSONObject(cfg);
+
+			for (String field: OPTION_FIELD_NAME) {
+				if (jsonObject.has(field)) {
+					Log.v(TAG, "parseJson " + field + " = " + jsonObject.getString(field));
 				}
 			}
 		} catch (JSONException e) {
+			e.printStackTrace();
 		}
-		
+		return jsonObject;
 	}
-
-    public int queryProperty(String property) {
-        if (property != null) {
-            mProperty = property;
-        }
-        else {
-            mProperty = SystemProperties.get(PROPERTY_LOG_SERVICE, PROPERTY_LOG_SERVICE_DEFAULT);
-        }
-        Log.v(TAG, "queryProperty mProperty = " + mProperty);
-        return parseProperty();
-    }
-
-    private int parseProperty() {
-
-        int ret = -1;
-        Log.v(TAG, "parseProperty mProperty = " + mProperty);
-        if (mProperty != null) {
-            String [] configs = mProperty.split(",");
-
-            if (configs.length == SECTION_COUNT) {
-				
-				for (Entry<String, Integer> entry: mapPropIndex.entrySet()) {
-					String key = entry.getKey();
-					int index = entry.getValue();
-					int val = Integer.parseInt(configs[index]);
-					mapOption.put(key, (val != 0));
-					Log.v(TAG, "parseProperty " + key + " = " + val);
-				}
-                ret = 0;
-
-            }else {
-                Log.v(TAG, "parseProperty mProperty invalid");
-            }
-        }
-        Log.v(TAG, "parseProperty ret = " + ret);
-
-        return ret;
-    }
-
 }

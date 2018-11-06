@@ -29,6 +29,7 @@ public class TestActivity extends Activity {
 
     private Button mReportUserException;
     private Button mUploadFileLog;
+    private Button mUploadMultiFileLog;
     private Button mCheckupdate;
     private ILogService.Stub mLogService;
     private static int exception_index = 0;
@@ -48,6 +49,7 @@ public class TestActivity extends Activity {
 
         mReportUserException = (Button)findViewById(R.id.reportUserException);
         mUploadFileLog = (Button)findViewById(R.id.uploadLogFile);
+        mUploadMultiFileLog = (Button)findViewById(R.id.uploadMultiLogFile);
         mCheckupdate = (Button)findViewById(R.id.checkupdate);
 
 
@@ -67,7 +69,7 @@ public class TestActivity extends Activity {
         mUploadFileLog.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                String description =  "APP error";
+                String description =  "Single File uploaded";
                 File f = new File("/sdcard/1.txt");
                 if (f.canWrite() && !f.exists()) {
                     try {
@@ -97,6 +99,53 @@ public class TestActivity extends Activity {
                 Bundle b = new Bundle();
                 try {
                     mLogService.uploadLogFile(description, file_path, 1, b);
+                } catch (RemoteException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+
+        mUploadMultiFileLog.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String description =  "Multi File uploaded";
+                File f = new File("/sdcard/1.txt");
+                File f2 = new File("/sdcard/1.txt_1");
+                File f3 = new File("/sdcard/1.txt_2");
+                if (f.canWrite() && !f.exists()) {
+                    try {
+                        f.getParentFile().mkdirs();
+                        f.createNewFile();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+                FileOutputStream fout = null;
+                try {
+                    fout = new FileOutputStream(f);
+                    fout.write(new Date().toString().getBytes());
+                    fout.flush();
+                    fout = new FileOutputStream(f2);
+                    fout.write(new Date().toString().getBytes());
+                    fout.flush();
+                    fout = new FileOutputStream(f3);
+                    fout.write(new Date().toString().getBytes());
+                    fout.flush();
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                } finally {
+                    try {
+                        fout.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+                String file_path = "/sdcard/1.txt";
+                Bundle b = new Bundle();
+                try {
+                    mLogService.uploadLogFile(description, file_path, 3, b);
                 } catch (RemoteException e) {
                     e.printStackTrace();
                 }

@@ -23,20 +23,45 @@ public class LogService extends Service {
 
     private static final String TAG = "LogService";
 
-    private static final String ACTION_REPORT_USER_EXCEPTION = "android.intent.action.ACTION_REPORT_EXCEPTION";
-    private static final String ACTION_UPLOAD_LOG_FILE = "android.intent.action.ACTION_UPLOAD_LOG_FILE";
-    private static final String ACTION_VALIDATE = "android.intent.action.ACTION_VALIDATE";
-    private static final String ACTION_DOWNLOAD = "android.intent.action.ACTION_DOWNLOAD";
-    private static final String ACTION_CHECK_UPDATE = "android.intent.action.ACTION_CHECK_UPDATE";
-    private static final String ACTION_CHECK_CATEGORY = "android.intent.action.ACTION_CHECK_CATEGORY";
+    //ACTION FIELD
+    public static final String ACTION_REPORT_USER_EXCEPTION = "android.intent.action.ACTION_REPORT_EXCEPTION";
+    public static final String ACTION_UPLOAD_LOG_FILE = "android.intent.action.ACTION_UPLOAD_LOG_FILE";
+    public static final String ACTION_VALIDATE = "android.intent.action.ACTION_VALIDATE";
+    public static final String ACTION_DOWNLOAD = "android.intent.action.ACTION_DOWNLOAD";
+    public static final String ACTION_CHECK_UPDATE = "android.intent.action.ACTION_CHECK_UPDATE";
+    public static final String ACTION_CHECK_CATEGORY = "android.intent.action.ACTION_CHECK_CATEGORY";
 
-    private static final String ACTION_REPORT_USER_EXCEPTION_RESULT = "android.intent.action.ACTION_REPORT_USER_EXCEPTION_RESULT";
-    private static final String ACTION_UPLOAD_LOG_FILE_RESULT = "android.intent.action.ACTION_UPLOAD_LOG_FILE_RESULT";
-    private static final String ACTION_VALIDATE_RESULT = "android.intent.action.ACTION_VALIDATE_RESULT";
-    private static final String ACTION_DOWNLOAD_RESULT = "android.intent.action.ACTION_DOWNLOAD_RESULT";
-    private static final String ACTION_CHECK_UPDATE_RESULT = "android.intent.action.ACTION_CHECK_UPDATE_RESULT";
-    private static final String ACTION_CHECK_CATEGORY_RESULT = "android.intent.action.ACTION_CHECK_CATEGORY_RESULT";
-    private static final String ACTION_PING_TIMEOUT = "android.intent.action.ACTION_PING_TIMEOUT";
+    //Action result
+    public static final String ACTION_REPORT_USER_EXCEPTION_RESULT = "android.intent.action.ACTION_REPORT_USER_EXCEPTION_RESULT";
+    public static final String ACTION_UPLOAD_LOG_FILE_RESULT = "android.intent.action.ACTION_UPLOAD_LOG_FILE_RESULT";
+    public static final String ACTION_VALIDATE_RESULT = "android.intent.action.ACTION_VALIDATE_RESULT";
+    public static final String ACTION_DOWNLOAD_RESULT = "android.intent.action.ACTION_DOWNLOAD_RESULT";
+    public static final String ACTION_CHECK_UPDATE_RESULT = "android.intent.action.ACTION_CHECK_UPDATE_RESULT";
+    public static final String ACTION_CHECK_CATEGORY_RESULT = "android.intent.action.ACTION_CHECK_CATEGORY_RESULT";
+    public static final String ACTION_PING_TIMEOUT = "android.intent.action.ACTION_PING_TIMEOUT";
+
+    //Report Exception Field Name
+    //PRIORITY
+    public static final String REPORT_EXCEPTION_PRIORITY = "R_E_PRIORITY";
+    //description
+    public static final String REPORT_EXCEPTION_DESCRIPTION = "R_E_DESCRIPTION";
+
+    //Log File upload
+    //description
+    public static final String LOG_UPLOAD_DESCRIPTION = "L_U_DESCRIPTION";
+    //Priority
+    public static final String LOG_UPLOAD_PRIORITY = "L_U_PRIORITY";
+    //File path
+    public static final String LOG_UPLOAD_FILE_PATH = "L_U_FILE_PATH";
+    //File count
+    public static final String LOG_UPLOAD_FILE_COUNT = "L_U_FILE_COUNT";
+
+    //Check update
+    public static final String CHECK_UPDATE_DESCRIPTION = "C_U_DESCRIPTION";
+
+    //Download software
+    public static final String DOWNLOAD_URL = "D_URL";
+    public static final String DOWNLOAD_SAVETO_PATH = "D_SAVETO_PATH";
 
     private static final long INTERVAL = (73 * 60 * 1000); // 1 hour
 
@@ -85,7 +110,7 @@ public class LogService extends Service {
             } else if (ACTION_VALIDATE.equals(action)) {
                 Log.v(TAG, "mBroadcastReceiver.onReceive action = " + action);
                 Bundle bundle = new Bundle();
-                //  (bundle);
+                //VALIDATE
             } else if (ACTION_DOWNLOAD.equals(action)) {
                 Log.v(TAG, "mBroadcastReceiver.onReceive action = " + action);
                 Bundle bundle = new Bundle();
@@ -111,7 +136,7 @@ public class LogService extends Service {
 
         @Override
         public void uploadLogFile(String description, String file_path, int file_count, Bundle info) {
-            Log.v(TAG, "uploadLogFile path = [" + file_path + "]");
+            Log.v(TAG, "uploadLogFile path = [" + file_path + "]" + ", file_count = [" + file_count + "]");
             if (mExceptionHandler != null) {
                 mExceptionHandler.uploadLogFile(description, file_path, file_count, info);
             }
@@ -153,23 +178,34 @@ public class LogService extends Service {
                 pkgs = mUploader.checkUpdate(info);
             }
 
-            //get the download url
-            Bundle first = pkgs.get(0);
-            String url = first.getString("firmware").trim();
+            String error = "";
+            if (pkgs != null) {
+                Log.v(TAG, "connect to server success, and now download the firmware");
 
-            File[] files = null;
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-                files = getExternalFilesDirs(Environment.MEDIA_MOUNTED);
+                //get the download url
+                Bundle first = pkgs.get(0);
+                String url = first.getString("firmware").trim();
+
+                File[] files = null;
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+                    files = getExternalFilesDirs(Environment.MEDIA_MOUNTED);
+                }
+                Log.d(TAG, "file_path = " + Environment.getExternalStorageDirectory());
+                String path = files[0].getAbsolutePath();
+                path = path + "/ " + "update.zip";
+                download("abcdefg", url, path ,new Bundle());
+            } else {
+                Log.v(TAG, "Failed to connect to server");
+                error = "Failed to connect to server";
             }
-            Log.d(TAG, "file_path = " + Environment.getExternalStorageDirectory());
-            String path = files[0].getAbsolutePath();
-            path = path + "/ " + "update.zip";
-            download("abcdefg", url, path ,new Bundle());
-
 
             Intent intent = new Intent(ACTION_CHECK_UPDATE_RESULT);
             intent.putParcelableArrayListExtra("pkgs", pkgs);
-            intent.putExtra("description", description);
+            if (error.isEmpty()) {
+                intent.putExtra("description", description);
+            } else {
+                intent.putExtra("description", error);
+            }
             sendBroadcast(intent);
         }
 

@@ -12,12 +12,11 @@ public class E_Record {
     private TypeValues type;
     private PriorityValues priority;
     private JSONObject object;
-    private String title;
+    private String description;
     private String file_path;
     private int file_count;
     private String rx_time;
     private String tx_time;
-    private String description;
     private int errcount;
     private String err;
 
@@ -67,14 +66,6 @@ public class E_Record {
 
     public void setObject(JSONObject object) {
         this.object = object;
-    }
-
-    public String getTitle() {
-        return title;
-    }
-
-    public void setTitle(String title) {
-        this.title = title;
     }
 
     public String getFile_path() {

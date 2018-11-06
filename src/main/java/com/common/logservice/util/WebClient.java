@@ -185,9 +185,18 @@ public class WebClient {
     private static JSONObject uploadFileChunk(
             URL url, String path, int offset, int blockSize, Map<String, String> params)
             throws BadFileException, NotReachException, BadResponseException {
-        Log.v(TAG, "uploadFileChunk url = [" + url + "] path = [" + path + "] offset = [" + offset + "] blockSize = [" + blockSize/1024 + "K]");
+        Log.v(TAG, "uploadFileChunk url = [" + url + "] path = [" + path + "] offset = [" + offset + "] blockSize = [" + (blockSize/1024/1024) + " M]");
         File file = new File(path);
         String filename = file.getName();
+        Log.v(TAG, "filename = " + filename + " lastindexof = " + filename.lastIndexOf("_"));
+        if (filename.lastIndexOf("_") > 0) {
+            try {
+                filename = filename.substring(0, filename.lastIndexOf("_"));
+            } catch (StringIndexOutOfBoundsException e) {
+                e.printStackTrace();
+            }
+            Log.v(TAG, "filename = " + filename);
+        }
         DataInputStream dis = prepareFileStream(path, offset);
 
         final int READ_BUF_SIZE = 1024*1024;
@@ -224,7 +233,7 @@ public class WebClient {
             //emitParamter(out, "eof", eof ? "1" : "0");
         } catch (UnsupportedEncodingException e) {
             throw new BadFileException(e.getMessage());
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
@@ -236,24 +245,24 @@ public class WebClient {
                 .append("\r\n\r\n");
         try {
             out.write(contentBody.toString().getBytes("utf-8"));
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-        } catch(IOException e) {
+        } catch(Exception e) {
             e.printStackTrace();
         }
 
         byte[] bufferOut = new byte[READ_BUF_SIZE];
         int totalCount = 0;
         try {
+            Log.v(TAG, "totalCount = " + totalCount + " blockSize = " + blockSize);
             while (totalCount < blockSize) {
                 int bytes = dis.read(bufferOut);
                 if (bytes <= 0) {
                     break;
                 }
+                Log.v(TAG, "bufferOut = " + bufferOut.toString());
                 out.write(bufferOut, 0, bytes);
                 totalCount += bytes;
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
@@ -265,29 +274,47 @@ public class WebClient {
                 .append(endBoundary);
         try {
             out.write(contentBody.toString().getBytes("utf-8"));
-            out.flush();
-            out.close();
+
         } catch (IOException e) {
             e.printStackTrace();
+        } finally {
+            try {
+                out.flush();
+                out.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
 
         // read response
         String strLine;
         int response_code = 0;
         StringBuilder strResponse = new StringBuilder();
+        InputStream response = null;
+        BufferedReader reader = null;
         try {
-            InputStream response = connection.getInputStream();
-            BufferedReader reader = new BufferedReader(new InputStreamReader(response));
+            if (connection.getResponseCode() == HttpURLConnection.HTTP_OK) {
+                response = connection.getInputStream();
+            } else {
+                response = connection.getErrorStream();
+            }
+            reader = new BufferedReader(new InputStreamReader(response));
             while ((strLine = reader.readLine()) != null) {
                 strResponse.append(strLine);
                 strResponse.append("\n");
             }
             response_code = connection.getResponseCode();
             strResponse.append("HttpResponseCode = [" + response_code + "]");
-            reader.close();
-            response.close();
+
         } catch (IOException e) {
             e.printStackTrace();
+        } finally {
+            try {
+                reader.close();
+                response.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
         connection.disconnect();
 
@@ -305,19 +332,6 @@ public class WebClient {
             }
         }
         return jsonobj;
-    }
-
-    private static JSONObject uploadFileChunk(URL url,
-                                             String path,
-                                             int startOffset,
-                                             int blockSize,
-                                             Map<String, String> params,
-                                             String storeAs,
-                                             boolean eof) throws BadFileException, BadResponseException, NotReachException {
-        //postparams.put("subpath", storeAs);
-        //params.put("EOF_FILE", eof ? "1" : "0");
-
-        return uploadFileChunk(url, path, startOffset, blockSize, params);
     }
 
     public static class UploadFile {
@@ -339,7 +353,7 @@ public class WebClient {
         }
 
         public UploadFile(String[] files) {
-
+            //getFileName for trucks
             fileList = new String[files.length];
             nameList = new String[files.length];
             for (int i=0; i<files.length; i++) {
@@ -354,7 +368,7 @@ public class WebClient {
             Log.v(TAG, "uploadPartial urlpath = [" + urlpath + "]");
             if (fileList == null || fileList.length == 0 
                 || fileIndex < 0 || fileIndex >= fileList.length) {
-                // no file to upload
+                // no file need to upload
                 return FINISHED;
             }
 
@@ -365,58 +379,72 @@ public class WebClient {
                 return UNRECOVERABLE_ERROR;
             }
 
-            JSONObject jobj;
+            //upload the log file, there may be two cases, one is filelist.lenght = 1 the other is > 1
+            while (true) {
+                Log.v(TAG, "uploadPartial fileIndex = " + fileIndex + " filename = " + fileList[fileIndex]);
+                JSONObject jobj = null;
 
-            try {
-                long startTime = System.currentTimeMillis();
-
-                if (nameList != null && nameList.length > 0) {
-                    jobj = uploadFileChunk(useurl, fileList[fileIndex], startOffset, CHUNK_SIZE, params, nameList[fileIndex], fileIndex == fileList.length - 1);
-                } else {
+                try {
+                    long startTime = System.currentTimeMillis();
+                    if (fileList.length > 1) {
+                        Log.v(TAG, "fileList = " + fileList.toString());
+                        int trucks = fileIndex + 1;
+                        Log.v(TAG, "trucks = " + trucks);
+                        params.put("trucks", String.valueOf(trucks));
+                        if (fileIndex == fileList.length - 1) {
+                            params.put("eot", "1");
+                        } else {
+                            params.remove("eot");
+                        }
+                    }
                     jobj = uploadFileChunk(useurl, fileList[fileIndex], startOffset, CHUNK_SIZE, params);
-                }
-                
-                long endTime = System.currentTimeMillis();
-                Log.v(TAG, "uploadPartial time = [" + (endTime - startTime) + "]");
-                if ((endTime - startTime) < 5 * 1000) {
-                    if (CHUNK_SIZE <= 1024*1024) {
-                        CHUNK_SIZE = 1024*1024;
+
+                    long endTime = System.currentTimeMillis();
+                    Log.v(TAG, "uploadPartial time = [" + (endTime - startTime) + " ms]");
+                    if ((endTime - startTime) < 5 * 1000) {
+                        if (CHUNK_SIZE <= 1024 * 1024) {
+                            CHUNK_SIZE = 1024 * 1024;
+                        }
+                    } else if ((endTime - startTime) > 10 * 1000) {
+                        if (CHUNK_SIZE > 1024 * 128) {
+                            CHUNK_SIZE = 1024 * 128;
+                        }
                     }
-                } else if ((endTime - startTime) > 10 * 1000) {
-                    if (CHUNK_SIZE > 1024*128) {
-                        CHUNK_SIZE = 1024*128;
+                } catch (BadFileException e) {
+                    errString = e.getMessage();
+                    return UNRECOVERABLE_ERROR;
+                } catch (BadResponseException e) {
+                    errString = e.getMessage();
+                    return RECOVERABLE_ERROR;
+                } catch (NotReachException e) {
+                    errString = e.getMessage();
+                    return RECOVERABLE_ERROR;
+                }
+
+                boolean eof;
+                int bytes;
+                try {
+                    eof = jobj.getBoolean("eof");
+                    bytes = jobj.getInt("bytes");
+                    Log.v(TAG, "eof === " + eof + " bytes ==== " + bytes);
+                } catch (JSONException e) {
+                    errString = e.getMessage();
+                    return RECOVERABLE_ERROR;
+                }
+
+                startOffset += bytes;
+                if (eof) {
+                    fileIndex++;
+                    if (fileIndex >= fileList.length) {
+                        fileIndex = 0;
+                        for(String str : fileList) {
+                            str  = "";
+                        }
+                        Log.v(TAG, "while finished");
+                        return FINISHED;
                     }
                 }
-            } catch (BadFileException e) {
-                errString = e.getMessage();
-                return UNRECOVERABLE_ERROR;
-            } catch (BadResponseException e) {
-                errString = e.getMessage();
-                return RECOVERABLE_ERROR;
-            } catch (NotReachException e) {
-                errString = e.getMessage();
-                return RECOVERABLE_ERROR;
             }
-
-            boolean eof;
-            int bytes;
-            try {
-                eof = jobj.getBoolean("eof");
-                bytes = jobj.getInt("bytes");
-
-            } catch (JSONException e) {
-                errString = e.getMessage();
-                return RECOVERABLE_ERROR;
-            }
-
-            startOffset += bytes;
-            if (eof) {
-                fileIndex++;
-                if (fileIndex >= fileList.length) {
-                    return FINISHED;
-                }
-            }
-            return 0;
         }
     }
 
@@ -441,8 +469,11 @@ public class WebClient {
         FileOutputStream fos = null;  
         try {
             url = new URL(furl);
-            conn = (HttpURLConnection)url.openConnection();  
-            conn.setConnectTimeout(5000);  
+            conn = (HttpURLConnection)url.openConnection();
+            conn.setRequestProperty("Content-Type", "application/octet-stream");
+            conn.setRequestProperty("Connection", "Keep-Alive");
+            conn.setRequestProperty("Charset", "UTF-8");
+            conn.setConnectTimeout(5000);
             conn.setReadTimeout(3000);
             int httpResponseCode = conn.getResponseCode();
             Log.v(TAG, "downloadFile httpResponseCode = [" + httpResponseCode + "]");

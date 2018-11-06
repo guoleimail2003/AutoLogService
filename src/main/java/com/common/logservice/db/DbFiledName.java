@@ -7,7 +7,7 @@ public interface DbFiledName {
     String TYPE = "type";
     String PRIORITY = "priority";
     String JSON_OBJECT = "json_obj";
-    String TITLE = "title";
+    String DESCRIPTION = "description";
     String FILE_PATH = "file_path";
     String FILE_COUNT = "file_count";
     String RX_TIME = "rx_time";

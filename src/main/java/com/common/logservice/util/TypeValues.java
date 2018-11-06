@@ -28,4 +28,8 @@ public enum  TypeValues{
     public int getValue(){
         return val;
     }
+
+    public String getTypeName() {
+        return type;
+    }
 };

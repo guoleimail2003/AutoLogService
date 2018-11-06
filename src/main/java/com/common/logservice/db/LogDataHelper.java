@@ -41,9 +41,9 @@ public class LogDataHelper implements DbFiledName {
                     + TYPE + " INTEGER DEFAULT 0,"
                     + PRIORITY + " INTEGER DEFAULT 0,"
                     + JSON_OBJECT + " TEXT,"
-                    + TITLE + " TEXT,"
+                    + DESCRIPTION + " TEXT,"
                     + FILE_PATH + " TEXT,"
-                    + FILE_COUNT + " INTEGER DEFAULT 1,"
+                    + FILE_COUNT + " INTEGER DEFAULT 0,"
                     + RX_TIME + " datetime DEFAULT current_timestamp, "
                     + TX_TIME + " datetime,"
                     + ERR_COUNT + " INTEGER DEFAULT 0,"
@@ -113,7 +113,7 @@ public class LogDataHelper implements DbFiledName {
         cv.put(TYPE, type.getValue());
         cv.put(PRIORITY, priority.getValue());
         cv.put(JSON_OBJECT, jobj.toString());
-        cv.put(TITLE, title);
+        cv.put(DESCRIPTION, title);
         cv.put(FILE_PATH, file_path);
         cv.put(FILE_COUNT, file_count);
 
@@ -157,7 +157,7 @@ public class LogDataHelper implements DbFiledName {
 
     public E_Record queryFirstTask() {
         E_Record r = null;
-        Cursor c =  helper.query(new String[]{ID, IMEI_1, IMEI_2, TYPE, PRIORITY, JSON_OBJECT, FILE_PATH, TITLE},
+        Cursor c =  helper.query(new String[]{ID, IMEI_1, IMEI_2, DESCRIPTION, TYPE, PRIORITY, JSON_OBJECT, FILE_PATH, FILE_COUNT,},
                 RX_TIME + " <= current_timestamp", null, PRIORITY + "," + ID + " limit 1");
         if (c.getCount() > 0 && c.moveToFirst()) {
             r = new E_Record();
@@ -167,14 +167,14 @@ public class LogDataHelper implements DbFiledName {
             r.setPriority(PriorityValues.getPriority(c.getInt(c.getColumnIndex(PRIORITY))));
             r.setType(TypeValues.getType(c.getInt(c.getColumnIndex(TYPE))));
             String str = c.getString(c.getColumnIndex(JSON_OBJECT));
-            r.setTitle(c.getString(c.getColumnIndex(TITLE)));
+            r.setDescription(c.getString(c.getColumnIndex(DESCRIPTION)));
             r.setFile_path(c.getString(c.getColumnIndex(FILE_PATH)));
+            r.setFile_count(c.getInt(c.getColumnIndex(FILE_COUNT)));
             Log.v(TAG, "queryFirstTask id = [" + r.getId() + "]"
                     + " imei_1 = [" + r.getImei_1() + "]"
-                    + " imei_2 = [" + r.getImei_2() + "]"
                     + " priority = [" + r.getPriority() + "]"
                     + " type = [" + r.getType() + "]"
-                    + " title = [" + r.getTitle() + "]"
+                    + " title = [" + r.getDescription() + "]"
                     + " file_path = [" + r.getFile_path() + "]"
                     + " file_count = [" + r.getFile_count() + "]");
             try {
