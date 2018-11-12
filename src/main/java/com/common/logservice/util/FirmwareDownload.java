@@ -8,6 +8,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.RandomAccessFile;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
@@ -69,7 +70,7 @@ public class FirmwareDownload implements Runnable {
         HttpURLConnection conn = null;
         InputStream is = null;
         BufferedInputStream bis = null;
-        FileOutputStream fos = null;
+        RandomAccessFile fos = null;
         try {
             url = new URL(furl);
             conn = (HttpURLConnection)url.openConnection();
@@ -98,8 +99,10 @@ public class FirmwareDownload implements Runnable {
             if ((int)(HttpURLConnection.HTTP_OK/100) == (int)(httpResponseCode/100)) {
                 is = conn.getInputStream();
                 bis = new BufferedInputStream(is);
-                fos = new FileOutputStream(new File(path));
-                byte [] buffer = new byte[1024];
+                fos = new RandomAccessFile(new File(path), "rw");
+                fos.seek(f_size);
+
+                byte [] buffer = new byte[1024*4];
                 int len = 0;
                 while ((len = bis.read(buffer)) != -1) {
                     Log.v(TAG, "downloadFile len = [" + len + "] + total = [" + (total/1024/1024) + "M]");
@@ -130,7 +133,6 @@ public class FirmwareDownload implements Runnable {
         } finally {
 
             try {
-                fos.flush();
                 if (fos != null) {
                     fos.close();
                 }
