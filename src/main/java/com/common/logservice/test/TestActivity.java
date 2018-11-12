@@ -142,7 +142,7 @@ public class TestActivity extends Activity {
                         e.printStackTrace();
                     }
                 }
-                String file_path = "/sdcard/1.txt";
+                String file_path = null;
                 Bundle b = new Bundle();
                 try {
                     mLogService.uploadLogFile(description, file_path, 3, b);

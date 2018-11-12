@@ -186,13 +186,9 @@ public class LogService extends Service {
                 Bundle first = pkgs.get(0);
                 String url = first.getString("firmware").trim();
 
-                File[] files = null;
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-                    files = getExternalFilesDirs(Environment.MEDIA_MOUNTED);
-                }
                 Log.d(TAG, "file_path = " + Environment.getExternalStorageDirectory());
-                String path = files[0].getAbsolutePath();
-                path = path + "/ " + "update.zip";
+                String path = Environment.getExternalStorageDirectory().getPath();
+                path = path + "/" + "update.zip";
                 download("abcdefg", url, path ,new Bundle());
             } else {
                 Log.v(TAG, "Failed to connect to server");

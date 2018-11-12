@@ -20,6 +20,7 @@ import android.util.Log;
 import com.common.logservice.db.DbFiledName;
 import com.common.logservice.db.LogDataHelper;
 import com.common.logservice.db.E_Record;
+import com.common.logservice.util.FirmwareDownload;
 import com.common.logservice.util.PriorityValues;
 import com.common.logservice.util.TypeValues;
 import com.common.logservice.util.Util;
@@ -498,7 +499,8 @@ public class LogUploader implements DbFiledName {
     
     public String download(String url, String path, Bundle info) {
         Log.v(TAG, "download url = [" + url + "] path = [" + path + "]");
-        String ret = WebClient.downloadFile(url, path);
+        FirmwareDownload download = new FirmwareDownload(url, path);
+        String ret = download.downloadFile(url, path);
         Log.v(TAG, "download ret = [" + ret + "]");
         return ret;
     }

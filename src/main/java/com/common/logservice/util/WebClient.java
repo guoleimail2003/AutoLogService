@@ -475,6 +475,7 @@ public class WebClient {
             conn.setRequestProperty("Charset", "UTF-8");
             conn.setConnectTimeout(5000);
             conn.setReadTimeout(3000);
+            conn.connect();
             int httpResponseCode = conn.getResponseCode();
             Log.v(TAG, "downloadFile httpResponseCode = [" + httpResponseCode + "]");
             if (HttpURLConnection.HTTP_OK == httpResponseCode) {
