@@ -33,102 +33,36 @@ public class Util {
 
     private static class Info {
         private static final String TAG = "Util.info";
-        
-        private static final String DEFAULT =
-                "{\"IP\":\"191.168.31.232\"," +
-                "/system/etc/assistant3/connection.json";
+        private static final String IP_AND_PORT = SystemProperties.get("persist.sys.logservice.ip", "192.168.31.232:3000").trim();
 
-        public String ip = "192.168.31.232";
-        public String internal_server = "http://192.168.31.232:3000";
-        public String external_server = "http://192.168.31.232:3000";
+        public String ip = null;
+        public int port = 0;
+        public String internal_server = "http://" + IP_AND_PORT;
+        public String external_server = "http://" + IP_AND_PORT;
         public String query_path = "/ota/versions";
-        public String download_path = "/api/DownloadPackage";
         public String validate_path = "/account/token/commit";
         public String category_path = "/api/exceptions/cat";
         public String config_path = "/autolog/config/json";
         public String post_path = "/log/report";
         public String upload_path = "/log/upload";
 
-        public int port = 3000;
-        
         private static Info info = null;
 
-        private Info(String file) {
-            build(file);
+        private Info() {
+            try {
+                ip = IP_AND_PORT.split(":")[0].trim();
+                port = Integer.parseInt(IP_AND_PORT.split(":")[1]);
+            } catch (Exception e) {
+                e.printStackTrace();
+                Log.e(TAG, "There is invalid server ip and port in property persist.sys.logservice.ip");
+            }
         }
 
-        private void build(String file) {
-            Log.v(TAG, "build file = " + file);
-            File f = new File(file);
-            if (!f.exists()) {
-                Log.v(TAG, "constructor file not exists");
-                return;
-            }
-            
-            JsonReader reader = null;
-            try {
-                reader = new JsonReader(new FileReader(f));
-                reader.beginObject();
-                while (reader.hasNext()) {
-                    String val = reader.nextName();
-                    if (val.equals("ip")) {
-                        ip = reader.nextString();
-                        Log.v(TAG, "build ip = " + ip);
-                    } else if (val.equals("internal_server")) {
-                        internal_server = reader.nextString();
-                        Log.v(TAG, "build internal_server = " + internal_server);
-                    } else if (val.equals("external_server")) {
-                        external_server = reader.nextString();
-                        Log.v(TAG, "build external_server = " + external_server);
-                    } else if (val.equals("query_path")) {
-                        query_path = reader.nextString();
-                        Log.v(TAG, "build query_path = " + query_path);
-                    } else if (val.equals("download_path")) {
-                        download_path = reader.nextString();
-                        Log.v(TAG, "build download_path = " + download_path);
-                    } else if (val.equals("validate_path")) {
-                        validate_path = reader.nextString();
-                        Log.v(TAG, "build validate_path = " + validate_path);
-                    } else if (val.equals("category_path")) {
-                        category_path = reader.nextString();
-                        Log.v(TAG, "build category_path = " + category_path);
-                    } else if (val.equals("config_path")) {
-                        config_path = reader.nextString();
-                        Log.v(TAG, "build config_path = " + config_path);
-                    } else if (val.equals("post_path")) {
-                        post_path = reader.nextString();
-                        Log.v(TAG, "build post_path = " + post_path);
-                    } else if (val.equals("upload_path")) {
-                        upload_path = reader.nextString();
-                        Log.v(TAG, "build upload_path = " + upload_path);
-                    } else if (val.equals("port")) {
-                        port = reader.nextInt();
-                        Log.v(TAG, "build port = " + port);
-                    } else {
-                        reader.skipValue();
-                    }
-                }
-                reader.endObject();
-                reader.close(); 
-            } catch (IOException e) {
-                e.printStackTrace();
-                Log.e(TAG, "build catch IOException = " + e.getMessage());
-            } finally {
-                try {
-                    if (reader != null) {
-                        reader.close(); 
-                    }
-                } catch (IOException e) {
-                    e.printStackTrace();
-                    Log.e(TAG, "build finally IOException = " + e.getMessage());
-                }
-            }
-        }
-        
         public static Info getSingleton() {
             Log.v(TAG, "getSingleton info = " + info);
+            Log.v(TAG, "IP_AND_PORT = " + IP_AND_PORT);
             if (info == null) {
-                info = new Info(DEFAULT);
+                info = new Info();
             }
             return info;
         }
@@ -142,14 +76,9 @@ public class Util {
     
     public static boolean isIntranet(Context context) {
 
-        //if (!isWifiConnect(context)) {
-        //    Log.e(TAG, "isIntranet no wifi connect");
-        //    return false;
-        //}
-
         try {
             Info info = Info.getSingleton();
-            Log.v(TAG, "isIntranet ip = [" + info.ip + "] port = [" + info.port + "]");
+            Log.v(TAG, "isIntranet ip = [" + info.ip + " port = [" + info.port + "]");
             SocketAddress socketAddress = new InetSocketAddress(info.ip, info.port);
             Socket clientSocket = new Socket();
             clientSocket.connect(socketAddress, 5000);
@@ -162,53 +91,15 @@ public class Util {
         return true;
     }
 
-    public static boolean isWifiConnect(Context context) {
-
-        if (TEST)
-            return true;
-		
-		ConnectivityManager cm = (ConnectivityManager)context.getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo netInfo = cm.getActiveNetworkInfo();
-        boolean connected = netInfo != null && netInfo.isAvailable() && netInfo.isConnected();
-
-        return connected && (netInfo.getType() == ConnectivityManager.TYPE_WIFI);
-    }
-
     public static boolean isNetworkConnected(Context context) {
-
-        if (TEST)
-            return true;
-
 		ConnectivityManager cm = (ConnectivityManager)context.getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo netInfo = cm.getActiveNetworkInfo();
         return netInfo != null && netInfo.isAvailable() && netInfo.isConnected();
-    }
-	
-	
-
-    public static String formatTime(long timeMillis) {
-        Calendar c = Calendar.getInstance();
-        c.setTimeInMillis(timeMillis);
-        return String.format(Locale.CHINA, "%04d-%02d-%02d %02d:%02d:%02d",
-                c.get(Calendar.YEAR),
-                c.get(Calendar.MONTH) + 1,
-                c.get(Calendar.DAY_OF_MONTH),
-                c.get(Calendar.HOUR_OF_DAY),
-                c.get(Calendar.MINUTE),
-                c.get(Calendar.SECOND));
-    }
-
-    public static String formatTime() {
-        return formatTime(System.currentTimeMillis());
     }
 
     public static String queryIMEI(Context context) {
         TelephonyManager tm = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
          return tm.getDeviceId();
-    }
-
-    public static String queryVersion() {
-        return SystemProperties.get(PROPERTY_LC_VERSION, null);
     }
 
     public static String getValidateUrl(Context context) {

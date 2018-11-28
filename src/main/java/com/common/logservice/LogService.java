@@ -2,7 +2,10 @@
 package com.common.logservice;
 
 import java.io.File;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 
 import android.app.PendingIntent;
 import android.app.Service;
@@ -17,6 +20,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.IBinder;
+import android.os.SystemProperties;
 import android.util.Log;
 
 public class LogService extends Service {
@@ -68,6 +72,9 @@ public class LogService extends Service {
 	private LogUploader mUploader;
     private LogException mExceptionHandler;
     private PendingIntent mPingIntent;
+    private String mVer;
+    private Date mVerDate;
+    private SimpleDateFormat mSimpleDateFormat = new SimpleDateFormat("yyyyMMdd");
 
 	private BroadcastReceiver mBroadcastReceiver = new BroadcastReceiver() {
         @Override
@@ -157,21 +164,20 @@ public class LogService extends Service {
         }
 
         @Override
-    	public void download(String description, String url, String path, Bundle info) {
-            Log.v(TAG, "download url = [" + url + "]");
-            String result = null;
-            if (mUploader != null) {
-                result = mUploader.download(url, path, info);
-            }
-            Log.v(TAG, "download result = [" + result + "]");
-            Intent intent = new Intent(ACTION_DOWNLOAD_RESULT);
-            intent.putExtra("result", result);
-            intent.putExtra("description", description);
-            sendBroadcast(intent);
+    	public void download(String url, String path, Bundle info) {
+                Log.v(TAG, "download url = [" + url + "]");
+                String result = null;
+                if (mUploader != null) {
+                    result = mUploader.download(url, path, info);
+                }
+                Log.v(TAG, "download result = [" + result + "]");
+                Intent intent = new Intent(ACTION_DOWNLOAD_RESULT);
+                intent.putExtra("result", result);
+                sendBroadcast(intent);
         }
 
         @Override
-    	public void checkUpdate(String description, Bundle info) {
+    	public void checkUpdate(Bundle info) {
             Log.v(TAG, "checkUpdate");
             ArrayList<Bundle> pkgs = null;
             if (mUploader != null) {
@@ -185,11 +191,34 @@ public class LogService extends Service {
                 //get the download url
                 Bundle first = pkgs.get(0);
                 String url = first.getString("firmware").trim();
+                String upgrade_ver = first.getString("version").trim();
+                Date upgrade_ver_date = null;
+                try {
+                    int index = upgrade_ver.lastIndexOf("_");
+                    String test = upgrade_ver.substring(index + 1, upgrade_ver.length());
+                    upgrade_ver_date = mSimpleDateFormat.parse(
+                            upgrade_ver.substring(index + 1, upgrade_ver.length())
+                        );
+                } catch (ParseException e) {
+                    e.printStackTrace();
+                    return;
+                }
 
-                Log.d(TAG, "file_path = " + Environment.getExternalStorageDirectory());
-                String path = Environment.getExternalStorageDirectory().getPath();
-                path = path + "/" + "update.zip";
-                download("abcdefg", url, path ,new Bundle());
+                Log.d(TAG, "file_path = " + Environment.getExternalStorageDirectory()
+                        + " upgrade_ver = " + upgrade_ver
+                        + " upgrade_ver_date = " + upgrade_ver_date
+                        + " mVer = " + mVer
+                        + " mVerDate = " + mVerDate);
+                if (mVerDate != null && upgrade_ver_date != null) {
+                    if (upgrade_ver_date.getTime() > mVerDate.getTime()) {
+                        String path = Environment.getExternalStorageDirectory().getPath() + "/" + "update.zip";
+                        File save_toFile = new File(path);
+                        if (save_toFile.exists()) {
+                            save_toFile.delete();
+                        }
+                        download(url, path, new Bundle());
+                    }
+                }
             } else {
                 Log.v(TAG, "Failed to connect to server");
                 error = "Failed to connect to server";
@@ -198,7 +227,7 @@ public class LogService extends Service {
             Intent intent = new Intent(ACTION_CHECK_UPDATE_RESULT);
             intent.putParcelableArrayListExtra("pkgs", pkgs);
             if (error.isEmpty()) {
-                intent.putExtra("description", description);
+                intent.putExtra("description", "CheckUpdate Success");
             } else {
                 intent.putExtra("description", error);
             }
@@ -222,7 +251,7 @@ public class LogService extends Service {
         }
     };
 
-    LogService() {
+    public LogService() {
         Log.v(TAG, "constructor");
     }
 
@@ -242,6 +271,18 @@ public class LogService extends Service {
     public void onCreate() {
         Log.v(TAG, "onCreate");
         super.onCreate();
+
+        mVer = SystemProperties.get("ro.build.display.id", "ST720_R2F16_DS_A4RV037P3_20181117");
+        //test code
+        //mVer = SystemProperties.get("ro.build.display.idd", "ST720_R2F16_DS_A4RV037P3_20181117");
+        int date_index = mVer.lastIndexOf("_");
+        try {
+            mVerDate = mSimpleDateFormat.parse(mVer.substring(date_index + 1, mVer.length()));
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+        Log.v(TAG, "LogService mVer = " + mVer
+                + " mVerDate = " + mVerDate);
 
         mUploader = new LogUploader(this);
 		mExceptionHandler = new LogException(this, mUploader);

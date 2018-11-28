@@ -23,6 +23,8 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 
 public class TestActivity extends Activity {
@@ -70,7 +72,10 @@ public class TestActivity extends Activity {
             @Override
             public void onClick(View v) {
                 String description =  "Single File uploaded";
-                File f = new File("/sdcard/1.txt");
+                Date date = new Date();
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss");
+                String file_name = sdf.format(date);
+                File f = new File("/sdcard/" + file_name + ".txt");
                 if (f.canWrite() && !f.exists()) {
                     try {
                         f.getParentFile().mkdirs();
@@ -95,7 +100,7 @@ public class TestActivity extends Activity {
                         e.printStackTrace();
                     }
                 }
-                String file_path = "/sdcard/1.txt";
+                String file_path = "/sdcard/" + file_name + ".txt";
                 Bundle b = new Bundle();
                 try {
                     mLogService.uploadLogFile(description, file_path, 1, b);
@@ -156,9 +161,8 @@ public class TestActivity extends Activity {
             @Override
             public void onClick(View v) {
                 Bundle bundle = new Bundle();
-                String abcd = "abc";
                 try {
-                    mLogService.checkUpdate(abcd, bundle);
+                    mLogService.checkUpdate(bundle);
                 } catch (RemoteException e) {
                     e.printStackTrace();
                 }
@@ -166,7 +170,9 @@ public class TestActivity extends Activity {
         });
 
 
-        Intent intent = new Intent(getApplicationContext(), LogService.class);
+        //Intent intent = new Intent(getApplicationContext(), LogService.class);
+        Intent intent = new Intent();
+        intent.setClassName("com.common.logservice", "com.common.logservice.LogService");
         bindService(intent, conn, Context.BIND_AUTO_CREATE);
     }
 
@@ -182,4 +188,9 @@ public class TestActivity extends Activity {
         }
     };
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        unbindService(conn);
+    }
 }

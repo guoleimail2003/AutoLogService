@@ -20,6 +20,8 @@ public class FirmwareDownload implements Runnable {
     //it show the current file download finished
     private Boolean mFinished;
 
+    private static Boolean mThreadDownloading;
+
     private long mDownloadedByes;
 
 
@@ -40,27 +42,44 @@ public class FirmwareDownload implements Runnable {
         initVar();;
 
         //initi thread
-        mThread = new Thread(this);
+        if (mThread == null && mFinished) {
+            mThread = new Thread(this);
+        }
     }
 
     private void initVar() {
         mFinished = false;
         mDownloadedByes = 0;
+        mThreadDownloading = false;
     }
 
     @Override
-    public void run() {
-        //check the
+    public synchronized void run() {
+        //check the thread is downloading
+        if (mThreadDownloading) {
+            return;
+        }
+
+        mThreadDownloading = true;
+
         if (mURL != null && !mURL.isEmpty()
                 && mStorage_as != null && !mStorage_as.isEmpty()) {
             while (!mFinished) {
                 downloadFile(mURL, mStorage_as);
+                try {
+                    Thread.sleep(200L);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
             }
         } else {
             Log.e(TAG, "The parameter have invalid paramer,"
                     + " mURL = " + mURL
                     + " mStorage_as = " + mStorage_as);
         }
+
+        Log.d(TAG, "Download Success");
+        mThreadDownloading = false;
     }
 
     public String downloadFile(String furl, String path) {

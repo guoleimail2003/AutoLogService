@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest 
     xmlns:android="http://schemas.android.com/apk/res/android"
-	android:sharedUserId="com."
     package="com.common.logservice"
     android:versionCode="1"
     android:versionName="1.0.0">
@@ -32,7 +31,9 @@
 			</intent-filter>
 		</activity>
 		<service
-			android:name="com.common.logservice.LogService">
+			android:name="com.common.logservice.LogService"
+			android:exported="true"
+			android:enabled="true">
 			<intent-filter>
 				<action android:name="com.common.logservice.ACTION_BIND_LOG_SERVICE"/>
 			</intent-filter>

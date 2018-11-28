@@ -11,9 +11,9 @@ interface ILogService
 	
     void validate(String description, String code, in Bundle info);
 	
-    void download(String description, String url, String path, in Bundle info);
+    void download(String url, String path, in Bundle info);
 	
-    void checkUpdate(String description, in Bundle info);
+    void checkUpdate(in Bundle info);
 	
     void checkCategory(String description, in Bundle info);
 }
