@@ -545,9 +545,9 @@ public class WebClient {
                 Log.e(TAG, "checkUpdate responsecode invalid");
                 pkgs = null;
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
-            Log.e(TAG, "checkUpdate IOException = " + e.getMessage());
+            Log.e(TAG, "checkUpdate Exception = " + e.getMessage());
             pkgs = null;
         }
 
@@ -565,6 +565,10 @@ public class WebClient {
                 }
                 reader.endObject();
                 reader.endArray();
+            } catch (IllegalStateException e) {
+                pkgs = null;
+                e.printStackTrace();
+                Log.e(TAG, "checkUpdate catch IllegalStateException = " + e.getMessage() + " which means json object is null, there is no firmware on the server!");
             } catch (NullPointerException e) {
                 pkgs = null;
                 e.printStackTrace();
@@ -585,7 +589,6 @@ public class WebClient {
                 }
             }
         }
-
         return pkgs;
     }
 

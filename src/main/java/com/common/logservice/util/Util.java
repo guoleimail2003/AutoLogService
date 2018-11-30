@@ -3,37 +3,26 @@
 
 package com.common.logservice.util;
 
-import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketAddress;
-import java.util.Calendar;
-import java.util.Locale;
-
 import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Build;
 import android.os.SystemProperties;
 import android.telephony.TelephonyManager;
-import android.util.JsonReader;
 import android.util.Log;
 
 public class Util {
     private static final String TAG = "Util";
-    public static boolean TEST = false;
+    public static boolean DEBUG_TEST = false;
 
     private static final String PROPERTY_LC_VERSION = "ro.build.display.lc.id";
-
-    //public static final String SERVERS[] = {
-    //        "http://172.21.3.240:6543",
-    //        "http://acs.leadcoretech.com"};
-
     private static class Info {
         private static final String TAG = "Util.info";
-        private static final String IP_AND_PORT = SystemProperties.get("persist.sys.logservice.ip", "192.168.31.232:3000").trim();
+        private static String IP_AND_PORT = SystemProperties.get("persist.sys.logservice.ip", "172.31.0.137:3000").trim();
 
         public String ip = null;
         public int port = 0;
@@ -50,8 +39,13 @@ public class Util {
 
         private Info() {
             try {
+                if (isDebug()) {
+                    IP_AND_PORT = "172.31.0.137:3000";
+                    Log.d(TAG, "IP_AND_PORT = " + IP_AND_PORT);
+                }
                 ip = IP_AND_PORT.split(":")[0].trim();
                 port = Integer.parseInt(IP_AND_PORT.split(":")[1]);
+                Log.v(TAG, "ip = [" + ip + "] port = [" + port + "]");
             } catch (Exception e) {
                 e.printStackTrace();
                 Log.e(TAG, "There is invalid server ip and port in property persist.sys.logservice.ip");
@@ -78,7 +72,7 @@ public class Util {
 
         try {
             Info info = Info.getSingleton();
-            Log.v(TAG, "isIntranet ip = [" + info.ip + " port = [" + info.port + "]");
+            Log.v(TAG, "isIntranet ip = [" + info.ip + "] port = [" + info.port + "]");
             SocketAddress socketAddress = new InetSocketAddress(info.ip, info.port);
             Socket clientSocket = new Socket();
             clientSocket.connect(socketAddress, 5000);
@@ -191,5 +185,9 @@ public class Util {
         Log.v(TAG, "getServerUrl server = [" + server + "]");
 
         return server;
+    }
+
+    public static boolean isDebug() {
+        return DEBUG_TEST;
     }
 }

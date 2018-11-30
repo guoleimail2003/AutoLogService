@@ -23,6 +23,8 @@ import android.os.IBinder;
 import android.os.SystemProperties;
 import android.util.Log;
 
+import com.common.logservice.util.Util;
+
 public class LogService extends Service {
 
     private static final String TAG = "LogService";
@@ -185,7 +187,9 @@ public class LogService extends Service {
             }
 
             String error = "";
-            if (pkgs != null) {
+            if (pkgs == null || (pkgs != null && pkgs.size() == 0) ) {
+                Log.v(TAG, "connect to server success, and there are no update file on the server");
+            } else if (pkgs != null && pkgs.size() > 0) {
                 Log.v(TAG, "connect to server success, and now download the firmware");
 
                 //get the download url
@@ -272,17 +276,24 @@ public class LogService extends Service {
         Log.v(TAG, "onCreate");
         super.onCreate();
 
-        mVer = SystemProperties.get("ro.build.display.id", "ST720_R2F16_DS_A4RV037P3_20181117");
-        //test code
-        //mVer = SystemProperties.get("ro.build.display.idd", "ST720_R2F16_DS_A4RV037P3_20181117");
+        if (Util.isDebug()) {
+            //test code
+            mVer = SystemProperties.get("ro.build.display.idd", "ST720_R2F16_DS_A4RV037P3_20181117");
+        } else {
+            //code get the system property
+            mVer = SystemProperties.get("ro.build.display.id", "ST720_R2F16_DS_A4RV037P3_20181117");
+        }
         int date_index = mVer.lastIndexOf("_");
         try {
             mVerDate = mSimpleDateFormat.parse(mVer.substring(date_index + 1, mVer.length()));
         } catch (ParseException e) {
             e.printStackTrace();
+            Log.e(TAG, "mVerDate = [" + mVerDate + "] mVer = [" + mVer + "]" );
+            mVerDate = null;
+            mVer = null;
         }
-        Log.v(TAG, "LogService mVer = " + mVer
-                + " mVerDate = " + mVerDate);
+        Log.v(TAG, "LogService mVer = " + (mVer==null?null:mVer)
+                + " mVerDate = " + (mVerDate == null?null:mVerDate));
 
         mUploader = new LogUploader(this);
 		mExceptionHandler = new LogException(this, mUploader);
