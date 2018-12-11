@@ -17,9 +17,10 @@ public class FirmwareDownload implements Runnable {
     private static final String FIRMWARE_NAME = "update.zip";
     private Thread mThread;
     //it show the current file download finished
-    private Boolean mFinished;
-
+    private static Boolean mFinished;
     private static Boolean mThreadDownloading;
+    private static Integer mThreadIndex = 0;
+    private static Integer mThreadRetry = 0;
 
     private long mDownloadedByes;
 
@@ -50,6 +51,9 @@ public class FirmwareDownload implements Runnable {
         mFinished = false;
         mDownloadedByes = 0;
         mThreadDownloading = false;
+        if (mThreadIndex++ > 254) {
+            mThreadIndex = 0;
+        }
     }
 
     @Override
@@ -64,7 +68,17 @@ public class FirmwareDownload implements Runnable {
         if (mURL != null && !mURL.isEmpty()
                 && mStorage_as != null && !mStorage_as.isEmpty()) {
             while (!mFinished) {
-                downloadFile(mURL, mStorage_as);
+                String ret = downloadFile(mURL, mStorage_as);
+                if ("OK".equals(ret)) {
+                    mFinished = true;
+                } else if ("FAILED".equals(ret)) {
+                    mFinished = false;
+                    mThreadRetry++;
+                    if (mThreadRetry == 5) {
+                        Log.d(TAG, "Thread retry 5 times and failed still, abort task");
+                        mFinished = true;
+                    }
+                }
                 try {
                     Thread.sleep(200L);
                 } catch (InterruptedException e) {
@@ -127,11 +141,12 @@ public class FirmwareDownload implements Runnable {
                     fos.write(buffer, 0, len);
                     total += len;
                 }
-                Log.v(TAG, "downloadFile total = [" + total + "] completed");
+                mFinished = false;
+                Log.v(TAG, "mFinished = [" + mFinished + "] downloadFile total = [" + total + "] completed");
             } else {
                 //Server response error code is not 2xx
                 Log.e(TAG, "downloadFile responsecode invalid");
-                ret = "ERROR";
+                ret = "FAILED";
                 mFinished = false;
                 mStartOffset = total;
             }
@@ -139,14 +154,17 @@ public class FirmwareDownload implements Runnable {
             e.printStackTrace();
             Log.e(TAG, "downloadFile catch IOException = " + e.getMessage());
             ret = "FAILED";
+            mFinished = true;
         } catch (NullPointerException e) {
             e.printStackTrace();
             Log.e(TAG, "downloadFile NullPointerException = " + e.getMessage());
             ret = "FAILED";
+            mFinished = true;
         } catch (Exception e) {
             e.printStackTrace();
             Log.e(TAG, "downloadFile Excpetion = " + e.getMessage());
             e.printStackTrace();
+            mFinished = true;
             ret = "FAILED";
         } finally {
 

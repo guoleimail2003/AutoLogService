@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.os.StrictMode;
@@ -33,6 +34,7 @@ public class TestActivity extends Activity {
     private Button mUploadFileLog;
     private Button mUploadMultiFileLog;
     private Button mCheckupdate;
+    private Button mUpdateIPAndPort;
     private ILogService.Stub mLogService;
     private static int exception_index = 0;
     private static int upload_file_index = 0;
@@ -53,6 +55,7 @@ public class TestActivity extends Activity {
         mUploadFileLog = (Button)findViewById(R.id.uploadLogFile);
         mUploadMultiFileLog = (Button)findViewById(R.id.uploadMultiLogFile);
         mCheckupdate = (Button)findViewById(R.id.checkupdate);
+        mUpdateIPAndPort = (Button)findViewById(R.id.updateipandport);
 
 
         mReportUserException.setOnClickListener(new View.OnClickListener() {
@@ -114,13 +117,29 @@ public class TestActivity extends Activity {
             @Override
             public void onClick(View v) {
                 String description =  "Multi File uploaded";
-                File f = new File("/sdcard/1.txt");
-                File f2 = new File("/sdcard/1.txt_1");
-                File f3 = new File("/sdcard/1.txt_2");
+                File f = new File(Environment.getExternalStorageDirectory() + "/1.txt");
+                File f2 = new File(Environment.getExternalStorageDirectory() + "/1.txt_1");
+                File f3 = new File(Environment.getExternalStorageDirectory() + "/1.txt_2");
                 if (f.canWrite() && !f.exists()) {
                     try {
                         f.getParentFile().mkdirs();
                         f.createNewFile();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+                if (f2.canWrite() && !f2.exists()) {
+                    try {
+                        f2.getParentFile().mkdirs();
+                        f2.createNewFile();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+                if (f3.canWrite() && !f3.exists()) {
+                    try {
+                        f3.getParentFile().mkdirs();
+                        f3.createNewFile();
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
@@ -147,7 +166,7 @@ public class TestActivity extends Activity {
                         e.printStackTrace();
                     }
                 }
-                String file_path = null;
+                String file_path = f.getAbsolutePath();
                 Bundle b = new Bundle();
                 try {
                     mLogService.uploadLogFile(description, file_path, 3, b);
@@ -163,6 +182,18 @@ public class TestActivity extends Activity {
                 Bundle bundle = new Bundle();
                 try {
                     mLogService.checkUpdate(bundle);
+                } catch (RemoteException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+
+        mUpdateIPAndPort.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Bundle bundle = new Bundle();
+                try {
+                    mLogService.updateServerIPPort(bundle);
                 } catch (RemoteException e) {
                     e.printStackTrace();
                 }

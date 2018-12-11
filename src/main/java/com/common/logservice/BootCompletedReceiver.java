@@ -17,8 +17,9 @@ public class BootCompletedReceiver extends BroadcastReceiver {
         Log.v(TAG, "onReceive action = " + action);
         if (action != null && Intent.ACTION_BOOT_COMPLETED.equals(action)) {
             Intent newIntent = new Intent(context, LogService.class);
-            context.startService(newIntent);
-            Log.v(TAG, "onReceive startService");
+            //For Delete the boot_complete service didn't setup when boot_completed received.
+            //context.startService(newIntent);
+            Log.v(TAG, "onReceive do nothing due to requirement");
         } else {
             Log.v(TAG, "onReceive do nothing");
         }

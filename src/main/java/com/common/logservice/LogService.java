@@ -20,6 +20,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.IBinder;
+import android.os.RemoteException;
 import android.os.SystemProperties;
 import android.util.Log;
 
@@ -144,6 +145,12 @@ public class LogService extends Service {
         }
 
         @Override
+        public void updateServerIPPort(Bundle info) throws RemoteException {
+            Log.v(TAG, "updateServerIPPort");
+            Util.updateIPAndPort();
+        }
+
+        @Override
         public void uploadLogFile(String description, String file_path, int file_count, Bundle info) {
             Log.v(TAG, "uploadLogFile path = [" + file_path + "]" + ", file_count = [" + file_count + "]");
             if (mExceptionHandler != null) {
@@ -167,14 +174,15 @@ public class LogService extends Service {
 
         @Override
     	public void download(String url, String path, Bundle info) {
-                Log.v(TAG, "download url = [" + url + "]");
+                Log.v(TAG, "download url = [" + url + "] + path = [" + path + "]");
                 String result = null;
                 if (mUploader != null) {
                     result = mUploader.download(url, path, info);
                 }
-                Log.v(TAG, "download result = [" + result + "]");
+                Log.v(TAG, "download result = [" + result + "] path = [" + path  + "]");
                 Intent intent = new Intent(ACTION_DOWNLOAD_RESULT);
                 intent.putExtra("result", result);
+                intent.putExtra("path", path);
                 sendBroadcast(intent);
         }
 
@@ -190,7 +198,7 @@ public class LogService extends Service {
             if (pkgs == null || (pkgs != null && pkgs.size() == 0) ) {
                 Log.v(TAG, "connect to server success, and there are no update file on the server");
             } else if (pkgs != null && pkgs.size() > 0) {
-                Log.v(TAG, "connect to server success, and now download the firmware");
+                Log.v(TAG, "connect to server success, and now check whether to download the firmware");
 
                 //get the download url
                 Bundle first = pkgs.get(0);
@@ -215,7 +223,7 @@ public class LogService extends Service {
                         + " mVerDate = " + mVerDate);
                 if (mVerDate != null && upgrade_ver_date != null) {
                     if (upgrade_ver_date.getTime() > mVerDate.getTime()) {
-                        String path = Environment.getExternalStorageDirectory().getPath() + "/" + "update.zip";
+                        String path = Environment.getExternalStorageDirectory().getPath() + "/" + upgrade_ver + ".zip";
                         File save_toFile = new File(path);
                         if (save_toFile.exists()) {
                             save_toFile.delete();

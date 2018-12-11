@@ -17,31 +17,35 @@ import android.util.Log;
 
 public class Util {
     private static final String TAG = "Util";
+    private static final String PROPERTY_AUTOLOGSERVICE_DEBUG = "property.autologservice.debug";
     public static boolean DEBUG_TEST = false;
-
-    private static final String PROPERTY_LC_VERSION = "ro.build.display.lc.id";
+    private static final String PROPERTY_SERVER_IP_AND_PORT = "persist.sys.logservice.ip";
     private static class Info {
         private static final String TAG = "Util.info";
-        private static String IP_AND_PORT = SystemProperties.get("persist.sys.logservice.ip", "172.31.0.137:3000").trim();
+        private static String IP_AND_PORT = getServerIPAndPort();
 
         public String ip = null;
         public int port = 0;
-        public String internal_server = "http://" + IP_AND_PORT;
-        public String external_server = "http://" + IP_AND_PORT;
-        public String query_path = "/ota/versions";
-        public String validate_path = "/account/token/commit";
-        public String category_path = "/api/exceptions/cat";
-        public String config_path = "/autolog/config/json";
-        public String post_path = "/log/report";
-        public String upload_path = "/log/upload";
+        public static String HTTP_HEAD =  "http://";
+        public static String internal_server = HTTP_HEAD + IP_AND_PORT;
+        public static String external_server = HTTP_HEAD + IP_AND_PORT;
+        public static String query_path = "/ota/versions";
+        public static String validate_path = "/account/token/commit";
+        public static String category_path = "/api/exceptions/cat";
+        public static String config_path = "/autolog/config/json";
+        public static String post_path = "/log/report";
+        public static String upload_path = "/log/upload";
 
         private static Info info = null;
 
         private Info() {
             try {
                 if (isDebug()) {
-                    IP_AND_PORT = "172.31.0.137:3000";
-                    Log.d(TAG, "IP_AND_PORT = " + IP_AND_PORT);
+                    IP_AND_PORT = "192.168.31.232:3000";
+                    Log.d(TAG, "debug process IP_AND_PORT = " + IP_AND_PORT);
+                } else {
+                    IP_AND_PORT = getServerIPAndPort();
+                    Log.d(TAG, "normal process IP_AND_PORT = " + IP_AND_PORT);
                 }
                 ip = IP_AND_PORT.split(":")[0].trim();
                 port = Integer.parseInt(IP_AND_PORT.split(":")[1]);
@@ -54,11 +58,28 @@ public class Util {
 
         public static Info getSingleton() {
             Log.v(TAG, "getSingleton info = " + info);
+            //check is the debug mode
+            updateIpAndPort();
             Log.v(TAG, "IP_AND_PORT = " + IP_AND_PORT);
             if (info == null) {
                 info = new Info();
             }
             return info;
+        }
+
+        public static void updateIpAndPort() {
+            Log.d(TAG, "updateIpAndPort");
+            if (isDebug()) {
+                IP_AND_PORT = "192.168.31.232:3000";
+            } else {
+                IP_AND_PORT = getServerIPAndPort();
+            }
+            internal_server = HTTP_HEAD + IP_AND_PORT;
+            external_server = HTTP_HEAD + IP_AND_PORT;
+            Log.d(TAG, "Info updateIpAndPort = [" + IP_AND_PORT + "]"
+                    + " internal_server = [" + internal_server + "]"
+                    + " internal_server = [" + external_server + "]");
+            info = new Info();
         }
     }
     
@@ -94,6 +115,23 @@ public class Util {
     public static String queryIMEI(Context context) {
         TelephonyManager tm = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
          return tm.getDeviceId();
+    }
+
+    public static void updateIPAndPort() {
+        Log.d(TAG,"updateIPAndPort");
+
+        Info.updateIpAndPort();
+    }
+
+    public static boolean getDebugFlag() {
+        boolean debug = SystemProperties.getBoolean(PROPERTY_AUTOLOGSERVICE_DEBUG, false);
+        DEBUG_TEST = debug;
+        Log.d(TAG, "getDebugFlag() = " + DEBUG_TEST);
+        return debug;
+    }
+
+    public static String getServerIPAndPort() {
+        return SystemProperties.get(PROPERTY_SERVER_IP_AND_PORT, "192.168.31.199:3000").trim();
     }
 
     public static String getValidateUrl(Context context) {
@@ -146,7 +184,7 @@ public class Util {
         Log.v(TAG, "getConfigeUrl url = [" + url + "]");
 
         return url;
-    }    
+    }
 
     public static String getPostUrl(Context context) {
         Info info = Info.getSingleton();
@@ -188,6 +226,7 @@ public class Util {
     }
 
     public static boolean isDebug() {
+        getDebugFlag();
         return DEBUG_TEST;
     }
 }
