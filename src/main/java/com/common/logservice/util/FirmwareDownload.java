@@ -14,8 +14,9 @@ import java.net.URL;
 public class FirmwareDownload implements Runnable {
     private static final String TAG = FirmwareDownload.class.getSimpleName();
 
-    private static final String FIRMWARE_NAME = "update.zip";
-    private Thread mThread;
+    private static final String DEFAULT_FIRMWARE_NAME = "update.zip";
+    private static final Integer MAX_RETRY_DOWNLOAD = 5;
+    private static Thread mThread;
     //it show the current file download finished
     private static Boolean mFinished;
     private static Boolean mThreadDownloading;
@@ -27,12 +28,14 @@ public class FirmwareDownload implements Runnable {
 
     private Long mStartOffset;
     private String mURL;
-    private String mStorage_as = Environment.getExternalStorageDirectory().getPath() + "/" + FIRMWARE_NAME;
+    private String mStorage_as;
 
     public FirmwareDownload(String url, String storage_as) {
         super();
         this.mURL = url;
         this.mStartOffset = 0L;
+
+        //Initialize the storeage as
         if (storage_as != null
                 && !storage_as.isEmpty()) {
             this.mStorage_as = storage_as;
@@ -44,11 +47,18 @@ public class FirmwareDownload implements Runnable {
         //initi thread
         if (mThread == null && mFinished) {
             mThread = new Thread(this);
+            mThread.start();
+        } else {
+            if (Util.isDebug()) {
+                Log.d(TAG, "Current the mThread =[" + mThread + "]"
+                        + " is not null or mFinished = [" + mFinished + "]");
+            }
+            Log.d(TAG, "mThread not running");
         }
     }
 
     private void initVar() {
-        mFinished = false;
+        mFinished = true;
         mDownloadedByes = 0;
         mThreadDownloading = false;
         if (mThreadIndex++ > 254) {
@@ -64,6 +74,7 @@ public class FirmwareDownload implements Runnable {
         }
 
         mThreadDownloading = true;
+        mFinished = false;
 
         if (mURL != null && !mURL.isEmpty()
                 && mStorage_as != null && !mStorage_as.isEmpty()) {
@@ -74,7 +85,7 @@ public class FirmwareDownload implements Runnable {
                 } else if ("FAILED".equals(ret)) {
                     mFinished = false;
                     mThreadRetry++;
-                    if (mThreadRetry == 5) {
+                    if (mThreadRetry >= MAX_RETRY_DOWNLOAD) {
                         Log.d(TAG, "Thread retry 5 times and failed still, abort task");
                         mFinished = true;
                     }
@@ -93,6 +104,8 @@ public class FirmwareDownload implements Runnable {
 
         Log.d(TAG, "Download Success");
         mThreadDownloading = false;
+        mFinished = true;
+        mThread = null;
     }
 
     public String downloadFile(String furl, String path) {

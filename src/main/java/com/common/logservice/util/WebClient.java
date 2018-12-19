@@ -363,6 +363,15 @@ public class WebClient {
             }
         }
 
+        protected void deleteUploadedFile() {
+            for (String str : fileList) {
+                File f = new File(str);
+                f.delete();
+                if(Util.isDebug()) {
+                    Log.v(TAG, "deleteUploadedFile delete file = [" + f.getAbsolutePath() +"]");
+                }
+            }
+        }
 
         protected int uploadPartial(Context context, String urlpath, Map<String, String> params) {
             Log.v(TAG, "uploadPartial urlpath = [" + urlpath + "]");

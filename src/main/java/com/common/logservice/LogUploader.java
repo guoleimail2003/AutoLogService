@@ -368,7 +368,9 @@ public class LogUploader implements DbFiledName {
             Log.v(TAG, "uploadPartialEx");
 			Map<String, String> postparams = new HashMap<>();
 			postparams.put("imei", mImei);
-            return uploadPartial(context, null, postparams); //req:upload dump log
+            int ret = uploadPartial(context, null, postparams); //req:upload dump log
+            deleteUploadedFile();
+            return ret;
         }
     }
 
@@ -500,9 +502,9 @@ public class LogUploader implements DbFiledName {
     public String download(String url, String path, Bundle info) {
         Log.v(TAG, "download url = [" + url + "] path = [" + path + "]");
         FirmwareDownload download = new FirmwareDownload(url, path);
-        String ret = download.downloadFile(url, path);
-        Log.v(TAG, "download ret = [" + ret + "]");
-        return ret;
+        //String ret = download.downloadFile(url, path);
+        //Log.v(TAG, "download ret = [" + ret + "]");
+        return "";
     }
     
     public ArrayList<Bundle> checkUpdate(Bundle info) {
