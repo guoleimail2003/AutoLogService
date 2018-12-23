@@ -1,0 +1,17 @@
+<resources>
+    <string name="app_name">AutoLogService</string>
+
+    <string name="hello_world">Hello world!</string>
+    <string name="action_settings">Settings</string>
+    <string name="cancel">Cancel</string>
+    <string name="ok">OK</string>
+    <string name="upload_exp">New exception ocurred. Report and uolad log?</string>
+    <string name="upload_exp_title">Exception report</string>
+	<string name="report_exception">Report Exception</string>
+    <string name="report">Report</string>
+    <string-array name="exception_list">
+        <item>Other</item>
+        <item>Bad performance</item>
+        <item>System abnormal</item>
+    </string-array>
+</resources>
