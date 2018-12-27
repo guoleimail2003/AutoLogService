@@ -32,6 +32,8 @@ LOCAL_DX_FLAGS := --multi-dex --main-dex-list=$(mainDexList) --minimal-main-dex
 
 LOCAL_JACK_FLAGS += --multi-dex native
 
+LOCAL_DEX_PREOPT := false
+
 include $(BUILD_PACKAGE)
 
 ############################################################################
