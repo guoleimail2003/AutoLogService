@@ -12,4 +12,9 @@
         <item>性能差</item>
         <item>系统不正常</item>
     </string-array>
+    <string name="reportuserexception">上报异常</string>
+    <string name="uploadlogfile">上传日志文件</string>
+    <string name="uploadmultilogfile">上传多个日志文件</string>
+    <string name="checkupdate">检查更新</string>
+    <string name="updateipandport">更新IP地址和商品</string>
 </resources>

@@ -14,4 +14,10 @@
         <item>Bad performance</item>
         <item>System abnormal</item>
     </string-array>
+
+    <string name="reportuserexception">ReportUserException</string>
+    <string name="uploadlogfile">uploadLogFile</string>
+    <string name="uploadmultilogfile">uploadMultiLogFile</string>
+    <string name="checkupdate">checkupdate</string>
+    <string name="updateipandport">updateipandport</string>
 </resources>

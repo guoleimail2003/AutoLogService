@@ -7,29 +7,29 @@
         android:id="@+id/reportUserException"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="ReportUserException" />
+        android:text="@string/reportuserexception" />
 
     <Button
         android:id="@+id/uploadLogFile"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:text="uploadLogFile" />
+    android:text="@string/uploadlogfile" />
 
     <Button
         android:id="@+id/uploadMultiLogFile"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="uploadMultiLogFile" />
+        android:text="@string/uploadmultilogfile" />
 
     <Button
         android:id="@+id/checkupdate"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="checkupdate" />
+        android:text="@string/checkupdate" />
 
     <Button
         android:id="@+id/updateipandport"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="updateipandport" />
+        android:text="@string/updateipandport" />
 </LinearLayout>
