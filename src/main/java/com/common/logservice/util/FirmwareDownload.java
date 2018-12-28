@@ -1,7 +1,10 @@
 package com.common.logservice.util;
 
-import android.os.Environment;
+import android.content.Context;
+import android.content.Intent;
 import android.util.Log;
+
+import com.common.logservice.LogService;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -19,7 +22,7 @@ public class FirmwareDownload implements Runnable {
     private static Thread mThread;
     //it show the current file download finished
     private static Boolean mFinished;
-    private static Boolean mThreadDownloading;
+    private static Boolean mThreadDownloading = false;
     private static Integer mThreadIndex = 0;
     private static Integer mThreadRetry = 0;
 
@@ -29,9 +32,12 @@ public class FirmwareDownload implements Runnable {
     private Long mStartOffset;
     private String mURL;
     private String mStorage_as;
+    private Context mContext;
+    private String mResult;
 
-    public FirmwareDownload(String url, String storage_as) {
+    public FirmwareDownload(Context context, String url, String storage_as) {
         super();
+        this.mContext = context;
         this.mURL = url;
         this.mStartOffset = 0L;
 
@@ -64,6 +70,7 @@ public class FirmwareDownload implements Runnable {
         if (mThreadIndex++ > 254) {
             mThreadIndex = 0;
         }
+        mResult = "Failed";
     }
 
     @Override
@@ -138,9 +145,11 @@ public class FirmwareDownload implements Runnable {
             }
 
             int httpResponseCode = conn.getResponseCode();
-            Log.v(TAG, "downloadFile httpResponseCode = [" + httpResponseCode + "]");
+            int f_total = conn.getContentLength();
+            Log.v(TAG, "downloadFile httpResponseCode = [" + httpResponseCode + "]"
+                    + " file_size = [" + f_total + "]");
 
-            long total = 0;
+            long downloaded_total = 0;
             if ((int)(HttpURLConnection.HTTP_OK/100) == (int)(httpResponseCode/100)) {
                 is = conn.getInputStream();
                 bis = new BufferedInputStream(is);
@@ -150,18 +159,28 @@ public class FirmwareDownload implements Runnable {
                 byte [] buffer = new byte[1024*4];
                 int len = 0;
                 while ((len = bis.read(buffer)) != -1) {
-                    Log.v(TAG, "downloadFile len = [" + len + "] + total = [" + (total/1024/1024) + "M]");
+                    Log.v(TAG, "downloadFile len = [" + len + "]"
+                        + " downloaded_total = [" + (downloaded_total/1024/1024) + "M]"
+                        + " f_total = [" + f_total + "]"
+                        + " percentage = [" + (int)(100 * downloaded_total/f_total) + "%]");
                     fos.write(buffer, 0, len);
-                    total += len;
+                    downloaded_total += len;
                 }
-                mFinished = false;
-                Log.v(TAG, "mFinished = [" + mFinished + "] downloadFile total = [" + total + "] completed");
+
+                if (downloaded_total == f_total) {
+                    //File download finished
+                    mFinished = true;
+                    Log.v(TAG, "mFinished = [" + mFinished + "] downloadFile downloaded_total = [" + downloaded_total + "] completed");
+                } else {
+                    mFinished = false;
+                }
             } else {
                 //Server response error code is not 2xx
                 Log.e(TAG, "downloadFile responsecode invalid");
                 ret = "FAILED";
                 mFinished = false;
-                mStartOffset = total;
+                mStartOffset = downloaded_total;
+                mDownloadedByes = downloaded_total;
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -189,7 +208,8 @@ public class FirmwareDownload implements Runnable {
                 if (bis != null) {
                     bis.close();
                 }
-
+            //Ready to send Broadcast
+            mResult = ret;
             } catch (Exception e) {
                 e.printStackTrace();
                 Log.e(TAG, "downloadFile finally IOException = " + e.getMessage());
@@ -198,6 +218,22 @@ public class FirmwareDownload implements Runnable {
         }
         Log.v(TAG, "downloadFile ret = [" + ret + "]");
 
+        if (mFinished) {
+            sendFinishedBroadcast(mStorage_as, mResult);
+        }
         return ret;
+    }
+
+    private void sendFinishedBroadcast(String path, String result) {
+        Log.v(TAG, "send download finished broadcast path = ["+ path + "]"
+                + "result = [" + result + "]");
+        Intent intent = new Intent(LogService.ACTION_DOWNLOAD_RESULT);
+        intent.putExtra("result", result);
+        intent.putExtra("path", path);
+        mContext.sendBroadcast(intent);
+    }
+
+    public static boolean isDownloadingFirmware() {
+        return (mThreadDownloading == null)?false:mThreadDownloading;
     }
 }

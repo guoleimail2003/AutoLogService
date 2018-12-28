@@ -126,7 +126,7 @@ public class LogService extends Service {
                 Bundle bundle = new Bundle();
                 String url = intent.getStringExtra("URL");
                 String path = intent.getStringExtra("file_path");
-                mUploader.download(url, path, bundle);
+                mUploader.download(getApplicationContext(), url, path, bundle);
             } else if (ACTION_CHECK_CATEGORY.equals(action)) {
                 Log.v(TAG, "mBroadcastReceiver.onReceive action = " + action);
             } else {
@@ -177,13 +177,8 @@ public class LogService extends Service {
                 Log.v(TAG, "download url = [" + url + "] + path = [" + path + "]");
                 String result = null;
                 if (mUploader != null) {
-                    result = mUploader.download(url, path, info);
+                    result = mUploader.download(getApplicationContext(), url, path, info);
                 }
-                Log.v(TAG, "download result = [" + result + "] path = [" + path  + "]");
-                Intent intent = new Intent(ACTION_DOWNLOAD_RESULT);
-                intent.putExtra("result", result);
-                intent.putExtra("path", path);
-                sendBroadcast(intent);
         }
 
         @Override

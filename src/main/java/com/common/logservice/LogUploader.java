@@ -499,12 +499,16 @@ public class LogUploader implements DbFiledName {
         return ret;
     }
     
-    public String download(String url, String path, Bundle info) {
+    public String download(Context context, String url, String path, Bundle info) {
         Log.v(TAG, "download url = [" + url + "] path = [" + path + "]");
-        FirmwareDownload download = new FirmwareDownload(url, path);
-        //String ret = download.downloadFile(url, path);
-        //Log.v(TAG, "download ret = [" + ret + "]");
-        return "";
+        String ret = "FAILED";
+        if (FirmwareDownload.isDownloadingFirmware()) {
+            ret = "Failed";
+            Log.w(TAG, "Failed due to thread is under downloading");
+        } else {
+            FirmwareDownload download = new FirmwareDownload(context, url, path);
+        }
+        return ret;
     }
     
     public ArrayList<Bundle> checkUpdate(Bundle info) {
