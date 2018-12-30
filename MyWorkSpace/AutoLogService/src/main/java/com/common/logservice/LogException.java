@@ -14,15 +14,10 @@ import com.common.logservice.util.WebClient;
 import org.json.JSONException;
 
 import java.io.File;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 public class LogException implements DbFiledName {
 
     private static final String TAG = "LogException";
-
-    private static final String ACTION_REPORT_EXCEPTION = "android.intent.action.EE_USER_EXCEPTION";
-    private static final String ACTION_UPLOAD_LOG = "android.intent.action.EE_LOG_UPLOAD";
 
     private static final String ACTION_EXCEPTION_RESULT = "android.intent.action.ACTION_EXCEPTION_RESULT";
 

@@ -20,7 +20,8 @@ import android.util.Log;
 import com.common.logservice.db.DbFiledName;
 import com.common.logservice.db.LogDataHelper;
 import com.common.logservice.db.E_Record;
-import com.common.logservice.util.FirmwareDownload;
+import com.common.logservice.ota.FirmwareDownload;
+import com.common.logservice.server.ServerInfo;
 import com.common.logservice.util.PriorityValues;
 import com.common.logservice.util.TypeValues;
 import com.common.logservice.util.Util;
@@ -29,8 +30,6 @@ import com.common.logservice.util.WebClient;;
 public class LogUploader implements DbFiledName {
 
     private static final String TAG = "LogUploader";
-
-    private static final int ACTION_PING = 40;
 
     private Context mContext;
     private LogDataHelper dataHelper = null;
@@ -229,10 +228,6 @@ public class LogUploader implements DbFiledName {
                 Log.e(TAG, "taskRoutine no network");
                 break;
             }
-
-    		if (r.getType() == TypeValues.T_UPLOAD_LOGFILE) {
-                Log.d(TAG, "upload the logfile with in no WIFI");
-    		}
 
             TaskHandler handle = handlers.get(r.getType().getValue());
             if (handle == null || r.getId() < 0) {
@@ -463,7 +458,7 @@ public class LogUploader implements DbFiledName {
         Log.v(TAG, "validate code = [" + code);
         String ret = "OK";
 
-        String url = Util.getValidateUrl(mContext);
+        String url = ServerInfo.getValidateUrl(mContext);
         Log.v(TAG, "validate url = [" + url + "]");
         try {
             Map<String, String> params = new HashMap<>();
@@ -509,7 +504,7 @@ public class LogUploader implements DbFiledName {
     
     public ArrayList<Bundle> checkUpdate(Bundle info) {
         Log.v(TAG, "checkUpdate");
-        String url = Util.getCheckUpdateUrl(mContext);
+        String url = ServerInfo.getCheckUpdateUrl(mContext);
         Log.v(TAG, "checkUpdate url = [" + url.toString() + "]");
         ArrayList<Bundle> pkgs = WebClient.checkUpdate(mContext, url);
         return pkgs;
@@ -517,7 +512,7 @@ public class LogUploader implements DbFiledName {
     
     public String checkCategory(Bundle info) {
         Log.v(TAG, "checkCategory");
-        String url = Util.getCheckCategoryUrl(mContext);
+        String url = ServerInfo.getCheckCategoryUrl(mContext);
         Log.v(TAG, "checkCategory url = [" + url + "]");
         String json = WebClient.checkCategory(mContext, url);
         Log.v(TAG, "checkCategory json = [" + json + "]");

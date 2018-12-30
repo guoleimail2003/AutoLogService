@@ -1,7 +1,9 @@
-package com.common.logservice.util;
+package com.common.logservice.ota;
 
-import android.os.Environment;
 import android.util.Log;
+
+import com.common.logservice.log.SystemLog;
+import com.common.logservice.util.Util;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -49,7 +51,7 @@ public class FirmwareDownload implements Runnable {
             mThread = new Thread(this);
             mThread.start();
         } else {
-            if (Util.isDebug()) {
+            if (SystemLog.isDebug()) {
                 Log.d(TAG, "Current the mThread =[" + mThread + "]"
                         + " is not null or mFinished = [" + mFinished + "]");
             }

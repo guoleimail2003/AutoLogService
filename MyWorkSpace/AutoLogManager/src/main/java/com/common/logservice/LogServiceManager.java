@@ -1,4 +1,4 @@
-package com.common.logservice.test;
+package com.common.logservice;
 
 import android.app.Activity;
 import android.content.ComponentName;
@@ -10,37 +10,29 @@ import android.os.Environment;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.os.StrictMode;
-import android.support.annotation.Nullable;
 import android.view.View;
 import android.widget.Button;
 
 import com.common.logservice.ILogService;
-import com.common.logservice.LogService;
-import com.common.logservice.R;
 
-import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-public class TestActivity extends Activity {
+public class LogServiceManager extends Activity {
 
     private Button mReportUserException;
     private Button mUploadFileLog;
     private Button mUploadMultiFileLog;
     private Button mCheckupdate;
     private Button mUpdateIPAndPort;
-    private ILogService.Stub mLogService;
+    private ILogService mLogService;
     private static int exception_index = 0;
-    private static int upload_file_index = 0;
 
-    @Override
-    protected void onCreate(@Nullable Bundle savedInstanceState) {
+    protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         //test code ,can not do network access in main thread.
@@ -51,11 +43,11 @@ public class TestActivity extends Activity {
 
         setContentView(R.layout.test_main);
 
-        mReportUserException = (Button)findViewById(R.id.reportUserException);
-        mUploadFileLog = (Button)findViewById(R.id.uploadLogFile);
-        mUploadMultiFileLog = (Button)findViewById(R.id.uploadMultiLogFile);
-        mCheckupdate = (Button)findViewById(R.id.checkupdate);
-        mUpdateIPAndPort = (Button)findViewById(R.id.updateipandport);
+        mReportUserException = (Button) findViewById(R.id.reportUserException);
+        mUploadFileLog = (Button) findViewById(R.id.uploadLogFile);
+        mUploadMultiFileLog = (Button) findViewById(R.id.uploadMultiLogFile);
+        mCheckupdate = (Button) findViewById(R.id.checkupdate);
+        mUpdateIPAndPort = (Button) findViewById(R.id.updateipandport);
 
 
         mReportUserException.setOnClickListener(new View.OnClickListener() {
@@ -74,7 +66,7 @@ public class TestActivity extends Activity {
         mUploadFileLog.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                String description =  "Single File uploaded";
+                String description = "Single File uploaded";
                 Date date = new Date();
                 SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss");
                 String file_name = sdf.format(date);
@@ -116,7 +108,7 @@ public class TestActivity extends Activity {
         mUploadMultiFileLog.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                String description =  "Multi File uploaded";
+                String description = "Multi File uploaded";
                 File f = new File(Environment.getExternalStorageDirectory() + "/1.txt");
                 File f2 = new File(Environment.getExternalStorageDirectory() + "/1.txt_1");
                 File f3 = new File(Environment.getExternalStorageDirectory() + "/1.txt_2");
@@ -210,7 +202,7 @@ public class TestActivity extends Activity {
     private ServiceConnection conn = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
-            mLogService = (ILogService.Stub)service;
+            mLogService = (ILogService.Stub.asInterface(service));
         }
 
         @Override

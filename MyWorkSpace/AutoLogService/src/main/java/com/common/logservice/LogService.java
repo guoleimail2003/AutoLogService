@@ -16,7 +16,6 @@ import android.content.IntentFilter;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.wifi.WifiManager;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.IBinder;
@@ -24,20 +23,13 @@ import android.os.RemoteException;
 import android.os.SystemProperties;
 import android.util.Log;
 
+import com.common.logservice.log.SystemLog;
+import com.common.logservice.server.ServerInfo;
 import com.common.logservice.util.Util;
 
 public class LogService extends Service {
 
     private static final String TAG = "LogService";
-
-    //ACTION FIELD
-    public static final String ACTION_REPORT_USER_EXCEPTION = "android.intent.action.ACTION_REPORT_EXCEPTION";
-    public static final String ACTION_UPLOAD_LOG_FILE = "android.intent.action.ACTION_UPLOAD_LOG_FILE";
-    public static final String ACTION_VALIDATE = "android.intent.action.ACTION_VALIDATE";
-    public static final String ACTION_DOWNLOAD = "android.intent.action.ACTION_DOWNLOAD";
-    public static final String ACTION_CHECK_UPDATE = "android.intent.action.ACTION_CHECK_UPDATE";
-    public static final String ACTION_CHECK_CATEGORY = "android.intent.action.ACTION_CHECK_CATEGORY";
-
     //Action result
     public static final String ACTION_REPORT_USER_EXCEPTION_RESULT = "android.intent.action.ACTION_REPORT_USER_EXCEPTION_RESULT";
     public static final String ACTION_UPLOAD_LOG_FILE_RESULT = "android.intent.action.ACTION_UPLOAD_LOG_FILE_RESULT";
@@ -46,29 +38,6 @@ public class LogService extends Service {
     public static final String ACTION_CHECK_UPDATE_RESULT = "android.intent.action.ACTION_CHECK_UPDATE_RESULT";
     public static final String ACTION_CHECK_CATEGORY_RESULT = "android.intent.action.ACTION_CHECK_CATEGORY_RESULT";
     public static final String ACTION_PING_TIMEOUT = "android.intent.action.ACTION_PING_TIMEOUT";
-
-    //Report Exception Field Name
-    //PRIORITY
-    public static final String REPORT_EXCEPTION_PRIORITY = "R_E_PRIORITY";
-    //description
-    public static final String REPORT_EXCEPTION_DESCRIPTION = "R_E_DESCRIPTION";
-
-    //Log File upload
-    //description
-    public static final String LOG_UPLOAD_DESCRIPTION = "L_U_DESCRIPTION";
-    //Priority
-    public static final String LOG_UPLOAD_PRIORITY = "L_U_PRIORITY";
-    //File path
-    public static final String LOG_UPLOAD_FILE_PATH = "L_U_FILE_PATH";
-    //File count
-    public static final String LOG_UPLOAD_FILE_COUNT = "L_U_FILE_COUNT";
-
-    //Check update
-    public static final String CHECK_UPDATE_DESCRIPTION = "C_U_DESCRIPTION";
-
-    //Download software
-    public static final String DOWNLOAD_URL = "D_URL";
-    public static final String DOWNLOAD_SAVETO_PATH = "D_SAVETO_PATH";
 
     private static final long INTERVAL = (73 * 60 * 1000); // 1 hour
 
@@ -98,37 +67,6 @@ public class LogService extends Service {
                     Log.v(TAG, "mBroadcastReceiver.onReceive Wifi connected");
                     mUploader.notifyTask();
                 }
-            } else if (ACTION_PING_TIMEOUT.equals(action)) {
-                Log.v(TAG, "mBroadcastReceiver.onReceive PING timeout");
-                mUploader.notifyPingTask();
-            } else if (ACTION_REPORT_USER_EXCEPTION.equals(action)) {
-                Log.v(TAG, "mBroadcastReceiver.onReceive action = " + action);
-                String desc = intent.getStringExtra("title");
-                Bundle bundle = new Bundle();
-
-                mExceptionHandler.reportUserException(desc, bundle);
-            } else if (ACTION_UPLOAD_LOG_FILE.equals(action)) {
-                Log.v(TAG, "mBroadcastReceiver.onReceive action = " + action);
-                String desc = intent.getStringExtra("EE_TITLE");
-                String file_path = intent.getStringExtra("EE_FILE_PATH");
-                Bundle bundle = new Bundle();
-                mExceptionHandler.uploadLogFile(desc, file_path, 1, bundle);
-            } else if (ACTION_CHECK_UPDATE.equals(action)) {
-                Log.v(TAG, "mBroadcastReceiver.onReceive action = " + action);
-                Bundle bundle = new Bundle();
-                mUploader.checkUpdate(bundle);
-            } else if (ACTION_VALIDATE.equals(action)) {
-                Log.v(TAG, "mBroadcastReceiver.onReceive action = " + action);
-                Bundle bundle = new Bundle();
-                //VALIDATE
-            } else if (ACTION_DOWNLOAD.equals(action)) {
-                Log.v(TAG, "mBroadcastReceiver.onReceive action = " + action);
-                Bundle bundle = new Bundle();
-                String url = intent.getStringExtra("URL");
-                String path = intent.getStringExtra("file_path");
-                mUploader.download(url, path, bundle);
-            } else if (ACTION_CHECK_CATEGORY.equals(action)) {
-                Log.v(TAG, "mBroadcastReceiver.onReceive action = " + action);
             } else {
                 Log.v(TAG, "mBroadcastReceiver.onReceive action = " + action + " can not handle it!");
             }
@@ -147,7 +85,7 @@ public class LogService extends Service {
         @Override
         public void updateServerIPPort(Bundle info) throws RemoteException {
             Log.v(TAG, "updateServerIPPort");
-            Util.updateIPAndPort();
+            ServerInfo.updateIpAndPort();
         }
 
         @Override
@@ -284,8 +222,9 @@ public class LogService extends Service {
         Log.v(TAG, "onCreate");
         super.onCreate();
 
-        if (Util.isDebug()) {
-            //test code
+        if (SystemLog.isDebug()) {
+            //test code set the ip and
+            SystemProperties.set("ro.build.display.id", "ST720_R2F16_DS_A4RV037P3_20181117");
             mVer = SystemProperties.get("ro.build.display.idd", "ST720_R2F16_DS_A4RV037P3_20181117");
         } else {
             //code get the system property
@@ -310,12 +249,6 @@ public class LogService extends Service {
         filter.addAction(WifiManager.NETWORK_STATE_CHANGED_ACTION);
         filter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
         filter.addAction(ACTION_PING_TIMEOUT);
-        filter.addAction(ACTION_REPORT_USER_EXCEPTION);
-        filter.addAction(ACTION_UPLOAD_LOG_FILE);
-        filter.addAction(ACTION_DOWNLOAD);
-        filter.addAction(ACTION_VALIDATE);
-        filter.addAction(ACTION_CHECK_CATEGORY);
-        filter.addAction(ACTION_CHECK_UPDATE);
         registerReceiver(mBroadcastReceiver, filter);
 
         Intent intent = new Intent(ACTION_PING_TIMEOUT);

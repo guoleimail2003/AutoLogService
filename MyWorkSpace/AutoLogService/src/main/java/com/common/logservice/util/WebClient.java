@@ -27,6 +27,9 @@ import android.os.Bundle;
 import android.util.JsonReader;
 import android.util.Log;
 
+import com.common.logservice.log.SystemLog;
+import com.common.logservice.server.ServerInfo;
+
 public class WebClient {
     private static final String TAG = WebClient.class.getSimpleName();
 
@@ -367,7 +370,7 @@ public class WebClient {
             for (String str : fileList) {
                 File f = new File(str);
                 f.delete();
-                if(Util.isDebug()) {
+                if(SystemLog.isDebug()) {
                     Log.v(TAG, "deleteUploadedFile delete file = [" + f.getAbsolutePath() +"]");
                 }
             }
@@ -383,7 +386,7 @@ public class WebClient {
 
             URL useurl;
             try {
-                useurl = new URL(Util.getUploadUrl(context));
+                useurl = new URL(ServerInfo.getUploadUrl(context));
             } catch (MalformedURLException e) {
                 return UNRECOVERABLE_ERROR;
             }
@@ -459,7 +462,7 @@ public class WebClient {
 
     public static String post(Context context, Map<String, String> params) throws IOException {
         try {
-            String url = Util.getPostUrl(context);
+            String url = ServerInfo.getPostUrl(context);
             Log.v(TAG, "post url = [" + url + "]");
             URL useurl = new URL(url);
             return postRequest(useurl, params);
