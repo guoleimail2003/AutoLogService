@@ -70,8 +70,8 @@ public class SystemLog {
 
 
     public static boolean getDebugFlag() {
-        int l = SystemProperties.getInt(PROPERTY_AUTOLOGSERVICE_DEBUG,  0);
-        mLogLevel = LogLevel.getLogLevelType(l);
+        int lev = SystemProperties.getInt(PROPERTY_AUTOLOGSERVICE_DEBUG,  0);
+        mLogLevel = LogLevel.getLogLevelType(lev);
         switch (mLogLevel) {
             case NORMAL:
                 break;
@@ -90,12 +90,12 @@ public class SystemLog {
             default:
                 break;
         }
-        DEBUG_TEST = l > LogLevel.NORMAL.getLevelValue();
+        DEBUG_TEST = lev > LogLevel.NORMAL.getLevelValue();
         Log.d(TAG, "getDebugFlag() = " + DEBUG_TEST);
         return DEBUG_TEST;
     }
 
-    public void LOGV(String caller, String msg) {
+    public static void LOGV(String caller, String msg) {
         if (mLogLevel.greaterthan(LogLevel.NORMAL)) {
             Log.v(caller, msg);
         }
@@ -107,20 +107,19 @@ public class SystemLog {
         }
     }
 
-
-    public void LOGI(String caller, String msg) {
+    public static void LOGI(String caller, String msg) {
         if (mLogLevel.greaterthan(LogLevel.DEBUG)) {
             Log.i(caller, msg);
         }
     }
 
-    public void LOGW(String caller, String msg) {
+    public static void LOGW(String caller, String msg) {
         if (mLogLevel.greaterthan(LogLevel.INFO)) {
             Log.e(caller, msg);
         }
     }
 
-    public void LOGE(String caller, String msg) {
+    public static void LOGE(String caller, String msg) {
         if (mLogLevel.greaterthan(LogLevel.WARNING)) {
             Log.e(caller, msg);
         }

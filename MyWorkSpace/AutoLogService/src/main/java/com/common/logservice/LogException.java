@@ -5,7 +5,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 
-import com.common.logservice.db.DbFiledName;
+import com.common.logservice.db.DBInfo;
 import com.common.logservice.db.E_Record;
 import com.common.logservice.util.PriorityValues;
 import com.common.logservice.util.TypeValues;
@@ -15,7 +15,7 @@ import org.json.JSONException;
 
 import java.io.File;
 
-public class LogException implements DbFiledName {
+public class LogException implements DBInfo {
 
     private static final String TAG = "LogException";
 
@@ -65,7 +65,7 @@ public class LogException implements DbFiledName {
                 Log.v(TAG, "handle ret = " + ret);
                 if (ret == WebClient.FINISHED) {
                     try {
-                        String logpath = r.getObject().getString(FILE_PATH);
+                        String logpath = r.getObject().getString(TASK_FILE_PATH);
                         Log.v(TAG, "handle ACTION_LOGFILE notify delete path = " + logpath);
                         File file = new File(logpath);
                         file.delete();
@@ -108,9 +108,9 @@ public class LogException implements DbFiledName {
     public void uploadLogFile(String description, String path, int file_count, Bundle info) {
         Log.v(TAG, "uploadLogFile path = " + path);
         Bundle bundle = new Bundle();
-        bundle.putString(DESCRIPTION, description);
-        bundle.putString(FILE_PATH, path);
-        bundle.putInt(FILE_COUNT, file_count);
+        bundle.putString(TASK_DESCRIPTION, description);
+        bundle.putString(TASK_FILE_PATH, path);
+        bundle.putInt(TASK_FILE_COUNT, file_count);
         if (info != null) {
             bundle.putBundle("info", info);
         }

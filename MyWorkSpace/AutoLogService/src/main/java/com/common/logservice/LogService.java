@@ -232,15 +232,15 @@ public class LogService extends Service {
         }
         int date_index = mVer.lastIndexOf("_");
         try {
-            mVerDate = mSimpleDateFormat.parse(mVer.substring(date_index + 1, mVer.length()));
+            mVerDate = mSimpleDateFormat.parse(mVer.substring(date_index + 1));
         } catch (ParseException e) {
             e.printStackTrace();
             Log.e(TAG, "mVerDate = [" + mVerDate + "] mVer = [" + mVer + "]" );
             mVerDate = null;
             mVer = null;
         }
-        Log.v(TAG, "LogService mVer = " + (mVer==null?null:mVer)
-                + " mVerDate = " + (mVerDate == null?null:mVerDate));
+        Log.v(TAG, "LogService mVer = " + mVer
+                + " mVerDate = " + mVerDate);
 
         mUploader = new LogUploader(this);
 		mExceptionHandler = new LogException(this, mUploader);

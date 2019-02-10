@@ -44,7 +44,7 @@ public class FirmwareDownload implements Runnable {
         }
 
         //initVar
-        initVar();;
+        initVar();
 
         //initi thread
         if (mThread == null && mFinished) {

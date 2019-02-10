@@ -13,8 +13,6 @@ import android.os.StrictMode;
 import android.view.View;
 import android.widget.Button;
 
-import com.common.logservice.ILogService;
-
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -192,8 +190,6 @@ public class LogServiceManager extends Activity {
             }
         });
 
-
-        //Intent intent = new Intent(getApplicationContext(), LogService.class);
         Intent intent = new Intent();
         intent.setClassName("com.common.logservice", "com.common.logservice.LogService");
         bindService(intent, conn, Context.BIND_AUTO_CREATE);

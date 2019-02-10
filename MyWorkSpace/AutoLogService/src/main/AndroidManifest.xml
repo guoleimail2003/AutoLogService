@@ -31,6 +31,14 @@
 				<action android:name="com.common.logservice.ACTION_BIND_LOG_SERVICE"/>
 			</intent-filter>
 		</service>
+
+		<provider
+			android:authorities="com.common.logservice"
+			android:name="com.common.logservice.db.LogProvider"
+			android:exported="false"
+			android:readPermission="com.common.logservice.READ"
+			android:writePermission="com.common.logservice.WRITE"
+			android:enabled="true"/>
 	</application>
 </manifest>
 

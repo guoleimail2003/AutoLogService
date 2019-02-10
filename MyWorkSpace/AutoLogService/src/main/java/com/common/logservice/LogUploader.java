@@ -17,9 +17,9 @@ import android.os.Bundle;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 
-import com.common.logservice.db.DbFiledName;
-import com.common.logservice.db.LogDataHelper;
+import com.common.logservice.db.DBInfo;
 import com.common.logservice.db.E_Record;
+import com.common.logservice.db.LogHelper;
 import com.common.logservice.ota.FirmwareDownload;
 import com.common.logservice.server.ServerInfo;
 import com.common.logservice.util.PriorityValues;
@@ -27,12 +27,12 @@ import com.common.logservice.util.TypeValues;
 import com.common.logservice.util.Util;
 import com.common.logservice.util.WebClient;;
 
-public class LogUploader implements DbFiledName {
+public class LogUploader implements DBInfo {
 
     private static final String TAG = "LogUploader";
 
     private Context mContext;
-    private LogDataHelper dataHelper = null;
+    private LogHelper mLogHelper = null;
     private static String mImei = "";
     private static String mSn = "";
     private static String mHwVersion = "";
@@ -78,7 +78,7 @@ public class LogUploader implements DbFiledName {
 
     protected LogUploader(Context context) {
         mContext = context;
-        dataHelper = new LogDataHelper(context);
+        mLogHelper = new LogHelper(context);
         init(context);
     }
 
@@ -129,27 +129,41 @@ public class LogUploader implements DbFiledName {
     }
 
     public void updateTask(E_Record r) {
-        dataHelper.updateTaskObject(r);
+        mLogHelper.updateTaskObject(r);
     }
 
     public void delayTask(E_Record r, int delay) {
         Log.v(TAG, "delayTask delay = " + delay);
-        dataHelper.changeTask(r.getId(), delay, -1, r.getErrcount(), r.getErr());
+        mLogHelper.changeTask(r.getId(), delay, -1, r.getErrcount(), r.getErr());
     }
 
     public void removeTask(E_Record r) {
-        dataHelper.removeTask(r.getId());
+        mLogHelper.removeTask(r.getId());
     }
 
     public boolean postTask(TypeValues type, PriorityValues priority, JSONObject obj, String title) {
         String file_path = null;
+        String imei_1 = "", imei_2 = "";
         int file_count = 0;
         try {
-            if (obj.has(FILE_PATH)) {
-                file_path = obj.getString(FILE_PATH);
+            if (obj.has(TASK_IMEI_1)) {
+                imei_1 = obj.getString(TASK_IMEI_1);
+            } else {
+                imei_1 = Util.queryIMEI(mContext);
             }
-            if (obj.has(FILE_COUNT)) {
-                file_count = obj.getInt(FILE_COUNT);
+
+            if (obj.has(TASK_IMEI_2)) {
+                imei_2 = obj.getString(TASK_IMEI_2);
+            } else {
+                imei_2 = Util.queryIMEI(mContext);
+            }
+
+            if (obj.has(TASK_FILE_PATH)) {
+                file_path = obj.getString(TASK_FILE_PATH);
+            }
+
+            if (obj.has(TASK_FILE_COUNT)) {
+                file_count = obj.getInt(TASK_FILE_COUNT);
             }
         } catch (JSONException e) {
             e.printStackTrace();
@@ -159,7 +173,7 @@ public class LogUploader implements DbFiledName {
                 + " file_path = " + file_path
                 + " file_count = " + file_count
                 + " title =" + title);
-        long id = dataHelper.addTask(type, priority, obj, title, file_path, file_count);
+        long id = mLogHelper.addTask(type, new String[]{imei_1, imei_2}, priority, obj, title, file_path, file_count);
         Log.v(TAG, "postTask id = " + id);
         return id > 0;
     }
@@ -215,7 +229,7 @@ public class LogUploader implements DbFiledName {
 		int executeCount = 0;
         Log.v(TAG, "taskRoutine loop begin");
         while (true) {
-            E_Record r = dataHelper.queryFirstTask();
+            E_Record r = mLogHelper.queryFirstTask();
             if (r == null) {
                 break;
             } else {
@@ -232,7 +246,7 @@ public class LogUploader implements DbFiledName {
             TaskHandler handle = handlers.get(r.getType().getValue());
             if (handle == null || r.getId() < 0) {
                 Log.e(TAG, "taskRoutine remove invalid record id = [" + r.getId() + "]");
-                dataHelper.removeTask(r.getId());
+                mLogHelper.removeTask(r.getId());
                 continue;
             }
 
@@ -244,7 +258,7 @@ public class LogUploader implements DbFiledName {
                 break;
             } else {
                 Log.v(TAG, "taskRoutine handle record id = [" + r.getId() + "] successfully");
-                dataHelper.removeTask(r.getId());
+                mLogHelper.removeTask(r.getId());
             }
         }
         Log.v(TAG, "taskRoutine loop end executeCount = [" +executeCount + "]");
@@ -289,14 +303,14 @@ public class LogUploader implements DbFiledName {
             int pos = 0;
             String desc = "", logpath = "";
             int file_count = 0;
-            if (r.getObject().has(DESCRIPTION)) {
-                desc = r.getObject().getString(DESCRIPTION); //req:upload dump log
+            if (r.getObject().has(TASK_DESCRIPTION)) {
+                desc = r.getObject().getString(TASK_DESCRIPTION); //req:upload dump log
             }
-            if (r.getObject().has(FILE_PATH)) {
-                logpath = r.getObject().getString(FILE_PATH);
+            if (r.getObject().has(TASK_FILE_PATH)) {
+                logpath = r.getObject().getString(TASK_FILE_PATH);
             }
-            if (r.getObject().has(FILE_COUNT)) {
-                file_count = r.getObject().getInt(FILE_COUNT);
+            if (r.getObject().has(TASK_FILE_COUNT)) {
+                file_count = r.getObject().getInt(TASK_FILE_COUNT);
             }
 
             //if file_count > 1 , multi file uploaded
@@ -497,8 +511,6 @@ public class LogUploader implements DbFiledName {
     public String download(String url, String path, Bundle info) {
         Log.v(TAG, "download url = [" + url + "] path = [" + path + "]");
         FirmwareDownload download = new FirmwareDownload(url, path);
-        //String ret = download.downloadFile(url, path);
-        //Log.v(TAG, "download ret = [" + ret + "]");
         return "";
     }
     

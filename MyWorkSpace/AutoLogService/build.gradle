@@ -1,5 +1,4 @@
 apply plugin: 'com.android.application'
-
 android {
     compileSdkVersion 28
     defaultConfig {
@@ -23,14 +22,12 @@ android {
     productFlavors {
     }
 }
-
 String SDK_DIR = System.getenv("ANDROID_SDK_HOME")
 if (SDK_DIR == null) {
     Properties props = new Properties()
     props.load(new FileInputStream(project.rootProject.file("local.properties")))
     SDK_DIR = props.get('sdk.dir');
 }
-
 dependencies {
     implementation files('libs/org.eclipse.paho.client.mqttv3.jar')
     implementation 'com.android.support:support-annotations:21.0.3'
