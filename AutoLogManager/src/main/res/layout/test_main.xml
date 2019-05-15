@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <Button
+        android:id="@+id/reportUserException"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="ReportUserException" />
+
+    <Button
+        android:id="@+id/uploadLogFile"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:text="uploadLogFile" />
+
+    <Button
+        android:id="@+id/uploadMultiLogFile"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="uploadMultiLogFile" />
+
+    <Button
+        android:id="@+id/checkupdate"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="checkupdate" />
+
+    <TextView
+        android:id="@+id/result_checkupdate"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+    <Button
+        android:id="@+id/updateipandport"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="updateipandport" />
+</LinearLayout>
